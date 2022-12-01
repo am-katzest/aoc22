@@ -3,41 +3,19 @@
    [clojure.test :refer [deftest is are testing]]
    [bored.core :refer :all]
    [clojure.string :as s]))
-(defn- ord->str [n] (str (char n)))
 
-(deftest basic-program-tests
-  (testing "output until inclusive 0"
-    (let [in (-> (range 1 256) vec (conj 0)
-                 (->> (map char) (apply str)))]
-      (= in (execute-string "+[,.]" in))))
+(defn dotest [n sol]
+  (is (= (decomp n) sol) (format "n: %d " n)))
 
-  (testing "output n exclamation marks"
-    (let [pluses (s/join (repeat (int \!) \+))
-          src (str ">" pluses "<,[>.<-]")
-          ! #(s/join (repeat % \!))]
-      (are [n] (= (execute-string src (ord->str n))
-                  (! n))
-        1 2 3 4 5 6 7 8 9 10)))
+(deftest primes-test
+  (is (=  [2 3 5 7] (primes 7)))
+  (is (=  [2 3 5] (primes 6)))
+  (is (=  [2 3 5] (primes 5))))
 
-  (testing "memory 0 initialized"
-    (is (= (execute-string ".>." "")
-           "\0\0")))
-
-  (testing "memory operations"
-    (is (= (execute-string ".>.+.<." "")
-           "\0\0\1\0")))
-
-  (testing "input output"
-    (are [n] (= (execute-string ".,." (ord->str n))
-                (str "\0" (char n)))
-      11 12 13 14 15 16 17 18 19 20))
-
-  (testing "loops"
-    (let [z #(s/join (repeat % "\0"))]
-      (are [n] (= (execute-string "[>.<],[>.<-]" (ord->str n))
-                  (z n))
-        21 22 23 24 25 26 27 28 29 30))))
-
-(deftest error-handling-test
-  (testing "insufficient input"
-    (is (nil? (execute-string "," "")))))
+(deftest a-test1
+  (testing "decomp"
+    (dotest 17 "2^15 * 3^6 * 5^3 * 7^2 * 11 * 13 * 17")
+    (dotest 5 "2^3 * 3 * 5")
+    (dotest 22 "2^19 * 3^9 * 5^4 * 7^3 * 11^2 * 13 * 17 * 19")
+    (dotest 14 "2^11 * 3^5 * 5^2 * 7^2 * 11 * 13")
+    (dotest 25 "2^22 * 3^10 * 5^6 * 7^3 * 11^2 * 13 * 17 * 19 * 23")))

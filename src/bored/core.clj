@@ -23,9 +23,9 @@
 (->> "input3b"
      slurp
      s/split-lines
-     (map set)
      (partition 3)
      (map #(->> %
+                (map set)
                 (apply set/intersection)
                 first
                 item->p))

@@ -1,42 +1,25 @@
 (ns bored.core
-  (:require [clojure.string :as s]))
-temptation
+  (:require [clojure.string :as s]
+            [clojure.set :as set]))
 
-(def val {:r 1
-          :p 2
-          :s 3})
-(def trans {"X" :r "A" :r
-            "Y" :p "B" :p
-            "Z" :s "C" :s})
-(def wins {:r :s
-           :p :r
-           :s :p})
-(defn line->score [l]
-  (let [[opp my] (map trans (s/split l #" "))]
-    (+ (my val) (cond (= opp my) 3
-                      (= (wins my) opp) 6
-                      :else 0))))
-(->> "input2"
+(defn split-sack [s]
+  (map set (split-at (/ (count s) 2) s)))
+(defn item->p [x]
+  (let [i (int x)
+        lowercase (> i 95)]
+    (if lowercase
+      (+ 1 (- i (int \a)))
+      (+ 27 (- i (int \A))))))
+(set/intersection #{1 2} #{3 5})
+(item->p \z)
+(defn line->p [line]
+  (let []))
+(->> "input3b"
      slurp
      s/split-lines
-     (map line->score)
-     (reduce +))
-
-(def loses {:s :r
-            :r :p
-            :p :s})
-
-(def trans2 {"X" wins "A" :r
-             "Y" identity "B" :p
-             "Z" loses "C" :s})
-(defn line->score2 [l]
-  (let [[opp strategy] (map trans2 (s/split l #" "))
-        my (strategy opp)]
-    (+ (my val) (cond (= opp my) 3
-                      (= (wins my) opp) 6
-                      :else 0))))
-(->> "input2"
-     slurp
-     s/split-lines
-     (map line->score2)
+     (map #(->> %
+                split-sack
+                (apply set/intersection)
+                first
+                item->p))
      (reduce +))

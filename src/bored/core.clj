@@ -2,22 +2,36 @@
   (:require [clojure.string :as s]
             [clojure.set :as set]))
 
-(defn  contain? [[[a A] [b B]]]
-  (or (and (>= a b) (>= B A))
-      (and (>= b a) (>= A B))))
+(defn transpose [m]
+  (apply mapv vector m))
 
-(defn overlap? [[[a A] [b B]]]
-  (or (<= a b A)
-      (<= a B A)
-      (<= b a B)))
+(defn read-stack [lines]
+  (->> lines
+       (map #(->> % (partition-all 4) (map second)))
+       transpose
+       (map #(drop-while #{\space} %))))
 
-(defn parse-line [line]
-  (->> (s/split line #"[,-]")
-       (map #(Integer/parseInt %))
-       (partition 2)))
+(defn read-instruction [line]
+  (->> line
+       (re-seq #"\d+")
+       (map #(Integer/parseInt %))))
 
-(->> "input4b"
-     slurp
-     s/split-lines
-     (filter (comp  overlap? parse-line))
-     count)
+(defn move-stack [stack [count si di]]
+  (let [si (dec si)
+        di (dec di)]
+    (-> #(let [[h & t] (get % si)
+               n (cons h (get % di))]
+           (assoc %
+                  si t
+                  di n))
+        (iterate stack)
+        (nth count))))
+
+(let [lines (->> "input5b" slurp s/split-lines)
+      [a b] (split-with (complement #{""}) lines)
+      stack (->> a reverse rest reverse read-stack vec)
+      instructions (->> b rest (map read-instruction))]
+  (->> instructions
+       (reduce move-stack stack)
+       (map first)
+       (apply str)))

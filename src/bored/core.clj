@@ -2,14 +2,11 @@
   (:require [clojure.string :as s]
             [clojure.set :as set]))
 
-(defn transpose [m]
-  (apply mapv vector m))
-
 (defn read-stack [lines]
   (->> lines
        (map #(->> % (partition-all 4) (map second)))
-       transpose
-       (map #(drop-while #{\space} %))))
+       (apply mapv vector)
+       (mapv #(drop-while #{\space} %))))
 
 (defn read-instruction [line]
   (->> line
@@ -18,18 +15,25 @@
 
 (defn move-stack [stack [count si di]]
   (let [si (dec si)
-        di (dec di)]
-    (-> #(let [[h & t] (get % si)
-               n (cons h (get % di))]
-           (assoc %
-                  si t
-                  di n))
-        (iterate stack)
-        (nth count))))
+        di (dec di)
+        [h t] (split-at count (get stack si))
+        n (concat (reverse h) (get stack di))]
+    (assoc stack
+           si t
+           di n)))
+
+(defn move-9001 [stack [count si di]]
+  (let [si (dec si)
+        di (dec di)
+        [h t] (split-at count (get stack si))
+        n (concat h (get stack di))]
+    (assoc stack
+           si t
+           di n)))
 
 (let [lines (->> "input5b" slurp s/split-lines)
       [a b] (split-with (complement #{""}) lines)
-      stack (->> a reverse rest reverse read-stack vec)
+      stack (->> a reverse rest reverse read-stack)
       instructions (->> b rest (map read-instruction))]
   (->> instructions
        (reduce move-stack stack)

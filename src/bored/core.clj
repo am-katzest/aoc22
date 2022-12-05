@@ -1,6 +1,5 @@
 (ns bored.core
-  (:require [clojure.string :as s]
-            [clojure.set :as set]))
+  (:require [clojure.string :as s]))
 
 (defn read-stack [lines]
   (->> lines

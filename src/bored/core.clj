@@ -1,40 +1,23 @@
 (ns bored.core
-  (:require [clojure.string :as s]))
+  (:require
+   [clojure.string :as s]))
 
-(defn read-stack [lines]
-  (->> lines
-       (map #(->> % (partition-all 4) (map second)))
-       (apply mapv vector)
-       (mapv #(drop-while #{\space} %))))
+(defn index-of [p coll]
+  (loop [i 0 [h & t] coll]
+    (if (p h) i (recur (inc i) t))))
 
-(defn read-instruction [line]
-  (->> line
-       (re-seq #"\d+")
-       (map #(Integer/parseInt %))))
+(defn all-unique? [coll]
+  (= (count coll)
+     (count (distinct coll))))
 
-(defn move-stack [stack [count si di]]
-  (let [si (dec si)
-        di (dec di)
-        [h t] (split-at count (get stack si))
-        n (concat (reverse h) (get stack di))]
-    (assoc stack
-           si t
-           di n)))
+(->> "input6b"
+     slurp
+     (partition 4 1)
+     (index-of all-unique?)
+     (+ 4))
 
-(defn move-9001 [stack [count si di]]
-  (let [si (dec si)
-        di (dec di)
-        [h t] (split-at count (get stack si))
-        n (concat h (get stack di))]
-    (assoc stack
-           si t
-           di n)))
-
-(let [lines (->> "input5b" slurp s/split-lines)
-      [a b] (split-with (complement #{""}) lines)
-      stack (->> a reverse rest reverse read-stack)
-      instructions (->> b rest (map read-instruction))]
-  (->> instructions
-       (reduce move-stack stack)
-       (map first)
-       (apply str)))
+(->> "input6b"
+     slurp
+     (partition 14 1)
+     (index-of all-unique?)
+     (+ 14))

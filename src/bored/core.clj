@@ -4,12 +4,15 @@
 
 (defn cd? [l] (second (re-find #"\$ cd (.*)" l)))
 (defn back? [x] (= "$ cd .." x))
-(defn ls? [l] (re-matches #"\$ ls" l))
-(defn dir? [l] (when-let [[_ d] (re-find #"dir (.+)" l)] {d {}}))
-(defn file? [l] (when-let [[_ size name] (re-matches #"([0-9]+) (.+)" l)]
-                  {name (Integer/parseInt size)}))
+(defn file? [l] (when-let [[_ size _] (re-matches #"([0-9]+) (.+)" l)]
+                  (Integer/parseInt size)))
+(defn deltas [path size]
+  (loop [acc {}
+         path path]
+    (if (empty? path) acc
+        (recur (merge acc {path size}) (pop path)))))
 
-(defn make-hierarchy [input]
+(defn sum-sizes [input]
   (loop [[l & r] input
          acc {}
          path []]
@@ -17,28 +20,20 @@
       (nil? l) acc
       (back? l) (recur r acc (pop path))
       (cd? l) (recur r acc (conj path (cd? l)))
-      (ls? l) (recur r acc path)
-      :else (recur r (update-in acc path merge
-                                (or (file? l) (dir? l))) path))))
+      (file? l) (recur r (merge-with + acc (deltas path (file? l))) path)
+      :else (recur r acc path))))
 
-(defn sum-dir-sizes [map]
-  (loop [[[k v] & r] (seq map)
-         dirs []
-         size 0]
-    (cond
-      (nil? v) [size dirs]
-      (int? v) (recur r dirs (+ size v))
-      :else (let [[s d] (sum-dir-sizes v)]
-              (recur r (concat dirs d {k s}) (+ s size))))))
-
-(let [[root rest] (->> "input7b"
-                       slurp
-                       s/split-lines
-                       make-hierarchy
-                       sum-dir-sizes)
-      free-so-far (- 70000000 root)
+(let [sizes
+      (->> "input7b"
+           slurp
+           s/split-lines
+           sum-sizes
+           (map second))
+      free-so-far (- 70000000 (apply max sizes))
       need-free (-  30000000  free-so-far)]
-  (->> rest
-       (map second)
-       (filter #(<= need-free %))
-       (apply min)))
+  {:first      (->> sizes
+                    (filter #(>= 100000 %))
+                    (reduce +))
+   :second (->> sizes
+                (filter #(<= need-free %))
+                (apply min))})

@@ -12,6 +12,21 @@
        rest
        (map first)))
 
+(defn rests [coll]
+  (->> coll
+       (iterate rest)
+       (take  (count coll))))
+
+(defn count-until [f coll]
+  (loop [acc 0
+         [h & t] coll]
+    (cond (nil? h) acc
+          (f h) (inc acc)
+          :else (recur (inc acc) t))))
+
+(defn rolling-scenic [coll]
+  (->> coll rests (mapv (fn [[c & r]] (count-until #(<= c %) r)))))
+
 (defn transpose [x] (apply mapv vector x))
 
 (defn check-visibility [look sum arr]
@@ -33,4 +48,8 @@
        (check-visibility biggest-so-far? #(or %1 %2 %3 %4))
        (reduce concat)
        (filter identity)
-       count))
+       count)
+  (->> trees
+       (check-visibility rolling-scenic *)
+       (apply concat)
+       (apply max)))

@@ -3,12 +3,14 @@
    [clojure.string :as s]))
 
 (defn biggest-so-far [coll]
-  (let [[f _ & rest] (reductions (fn [[_ max] item]
-                                   (if (> item max)
-                                     [true item]
-                                     [false max]))
-                                 [true Integer/MIN_VALUE] coll)]
-    (map first (cons f rest))))
+  (->> coll
+       (reductions
+        (fn [[_ max] item]
+          (if (or (nil? max) (> item max))
+            [true item]
+            [false max])) nil)
+       rest
+       (map first)))
 
 (defn transpose [x] (apply mapv vector x))
 

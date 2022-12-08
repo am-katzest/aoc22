@@ -44,12 +44,12 @@
                  slurp
                  (s/split-lines)
                  (mapv (fn [l] (mapv #(Integer/parseInt (str %)) l))))]
-  (->> trees
-       (check-visibility biggest-so-far? #(or %1 %2 %3 %4))
-       (reduce concat)
-       (filter identity)
-       count)
-  (->> trees
-       (check-visibility rolling-scenic *)
-       (apply concat)
-       (apply max)))
+  {:first (->> trees
+               (check-visibility biggest-so-far? #(or %1 %2 %3 %4))
+               (reduce concat)
+               (filter identity)
+               count)
+   :second (->> trees
+                (check-visibility rolling-scenic *)
+                (apply concat)
+                (apply max))})

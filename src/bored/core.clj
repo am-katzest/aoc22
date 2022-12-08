@@ -29,7 +29,7 @@
 
 (defn transpose [x] (apply mapv vector x))
 
-(defn check-visibility [look sum arr]
+(defn complex-aggregate-thing [look sum arr]
   (let [tran #(comp transpose % transpose)
         rev-in #(mapv reverse %)
         iter #(mapv look %)
@@ -45,11 +45,11 @@
                  (s/split-lines)
                  (mapv (fn [l] (mapv #(Integer/parseInt (str %)) l))))]
   {:first (->> trees
-               (check-visibility biggest-so-far? #(or %1 %2 %3 %4))
+               (complex-aggregate-thing biggest-so-far? #(or %1 %2 %3 %4))
                (reduce concat)
                (filter identity)
                count)
    :second (->> trees
-                (check-visibility rolling-scenic *)
+                (complex-aggregate-thing rolling-scenic *)
                 (apply concat)
                 (apply max))})

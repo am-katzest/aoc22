@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as s]))
 
-(defn biggest-so-far [coll]
+(defn biggest-so-far? [coll]
   (->> coll
        (reductions
         (fn [[_ max] item]
@@ -14,22 +14,23 @@
 
 (defn transpose [x] (apply mapv vector x))
 
-(defn check-visibility [arr]
+(defn check-visibility [look sum arr]
   (let [tran #(comp transpose % transpose)
-        iter #(mapv biggest-so-far %)
-        rev #(mapv (comp reverse biggest-so-far reverse) %)
+        rev-in #(mapv reverse %)
+        iter #(mapv look %)
+        rev #(comp rev-in % rev-in)
         a (iter arr)
-        b (rev arr)
+        b ((rev iter) arr)
         c ((tran iter) arr)
-        d ((tran rev) arr)
-        aa #(or %1 %2 %3 %4)]
-    (mapv #(mapv aa %1 %2 %3 %4) a b c d)))
+        d ((tran (rev iter)) arr)]
+    (mapv #(mapv sum %1 %2 %3 %4) a b c d)))
 
-(->> "input8b"
-     slurp
-     (s/split-lines)
-     (mapv (fn [l] (mapv #(Integer/parseInt (str %)) l)))
-     check-visibility
-     (reduce concat)
-     (filter identity)
-     count)
+(let [trees (->> "input8b"
+                 slurp
+                 (s/split-lines)
+                 (mapv (fn [l] (mapv #(Integer/parseInt (str %)) l))))]
+  (->> trees
+       (check-visibility biggest-so-far? #(or %1 %2 %3 %4))
+       (reduce concat)
+       (filter identity)
+       count))

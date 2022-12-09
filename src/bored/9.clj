@@ -2,30 +2,18 @@
   (:require
    [clojure.string :as s]))
 
-(defn V "applies operator to each element of vectors"
+(defn V
+  "applies operator to each element of vectors"
   [op & vecs] (apply mapv op vecs))
 
-(defn spring-o "calculates movement based on difference"
-  [[x y :as vec]]
-  (letfn [(abs [x] (if (pos? x) x (- x)))
-          (weak [x] (cond (> x 1) 1
-                          (< x -1) -1
-                          :else 0))
-          (strong [x] (cond (>= x 1) 1
-                            (<= x -1) -1
-                            :else 0))]
-    (if (< 2 (+ (abs x) (abs y)))
-      (V strong vec)
-      (V weak vec))))
-(defn spring "calculates movement based on difference"
+(defn spring
+  "calculates movement based on difference"
   [vec]
-  (letfn [(split [x] (if (pos? x) [x 1] [(- x) -1]))
-          (weak [x] (if (> x 1) 1 0))
-          (strong [x] (if (>= x 1) 1 0))]
-    (let [[[x xs] [y ys]] (V split vec)]
-      (V *  [xs ys] (if (< 2 (+ x y))
-                      (V strong [x y])
-                      (V weak [x y]))))))
+  (let [split #(if (pos? %) [% 1] [(- %) -1])
+        [[x xs] [y ys]] (V split vec)
+        min-distance (if (> (+ x y) 2) 1 2)
+        choose (fn [dst dir] (if (>= dst min-distance) dir 0))]
+    (V choose [x y] [xs ys])))
 
 (defn follow [head tail]
   (->> (V - head tail)

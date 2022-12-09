@@ -40,16 +40,11 @@
         d ((tran (rev iter)) arr)]
     (mapv #(mapv sum %1 %2 %3 %4) a b c d)))
 
-(let [trees (->> "input8b"
+(let [trees (->> "input8c"
                  slurp
                  (s/split-lines)
                  (mapv (fn [l] (mapv #(Integer/parseInt (str %)) l))))]
-  {:first (->> trees
-               (complex-aggregate-thing biggest-so-far? #(or %1 %2 %3 %4))
-               (reduce concat)
-               (filter identity)
-               count)
-   :second (->> trees
-                (complex-aggregate-thing rolling-scenic *)
-                (apply concat)
-                (apply max))})
+  (->> trees
+       (complex-aggregate-thing biggest-so-far? #(or %1 %2 %3 %4))
+       (mapv (fn [line] (reduce str (mapv #(if % "██" "  ") line))))
+       (mapv println)))

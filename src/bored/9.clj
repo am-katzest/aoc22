@@ -1,35 +1,26 @@
 (ns bored.9
   (:require
    [clojure.string :as s]))
-(def directions {"U" [1 0]
-                 "D" [-1 0]
-                 "L" [0 -1]
-                 "R" [0 1]})
 
 (defn V [op & vecs]
   (apply mapv op vecs))
 
-(defn weak [x]
-  (cond (> x 1) 1
-        (< x -1) -1
-        :else 0))
-(defn strong [x]
-  (cond (>= x 1) 1
-        (<= x -1) -1
-        :else 0))
-(defn abs [x]
-  ((if (pos? x) + -) x))
-
 (defn spring [[x y :as vec]]
-  (if (< 2 (+ (abs x) (abs y)))
-    (V strong vec)
-    (V weak vec)))
+  (letfn [(abs [x] (if (pos? x) x (- x)))
+          (weak [x] (cond (> x 1) 1
+                          (< x -1) -1
+                          :else 0))
+          (strong [x] (cond (>= x 1) 1
+                            (<= x -1) -1
+                            :else 0))]
+    (if (< 2 (+ (abs x) (abs y)))
+      (V strong vec)
+      (V weak vec))))
 
 (defn follow [head tail]
-  (let [tail' (->> (V - head tail)
-                   spring
-                   (V + tail))]
-    tail'))
+  (->> (V - head tail)
+       spring
+       (V + tail)))
 
 (defn step [[head & tail] delta]
   (let [head'  (V + head delta)
@@ -39,6 +30,12 @@
 (defn simulate [length instructions]
   (let [initial-state (repeat length [0 0])] ; min=2
     (reductions step initial-state instructions)))
+
+(def directions
+  {"U" [1 0]
+   "D" [-1 0]
+   "L" [0 -1]
+   "R" [0 1]})
 
 (->> "input9b"
      slurp

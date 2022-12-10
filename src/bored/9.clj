@@ -35,14 +35,14 @@
    "L" [0 -1]
    "R" [0 1]})
 
-(->> "input9b"
+(->> "input9d"
      slurp
      (s/split-lines)
      (map (fn [line] (let [[x y] (s/split line #" ")]
-                       (repeat (Integer/parseInt y) (directions x)))))
-     (apply concat) ; just a list of directions here
+                      (repeat (Integer/parseInt y) (directions x)))))
+     (apply concat)                     ; just a list of directions here
      (simulate 10)
-     (map last)     ; list of tail positions
+     (map last)                         ; list of tail positions
      sort
      dedupe
      count)

@@ -18,10 +18,11 @@
     {:id (first (read-ints id))
      :items (vec (read-ints starting))
      :op (make-op (s/split op #" +"))
+     :div test
      :where? #(if (zero? (mod % test)) t f)
      :inspected 0}))
 
-(defn relief [x] (bigint (/ x 3)))
+(defn ^:dynamic relief [x] (bigint (/ x 3)))
 
 (defn- run-monkey [ms i]
   (let [m (ms i)
@@ -33,7 +34,7 @@
                   (recur t (update-in ms [target-m :items] conj v')))
                 ms))]
     (-> ms'
-        (update-in [i :inspected] + (count items))
+        (update-in [i :inspected] +' (count items))
         (assoc-in  [i :items] []))))
 
 (defn round [ms]
@@ -41,11 +42,23 @@
     (if (= i (count ms)) ms
         (recur (run-monkey ms i) (inc i)))))
 
+(defn GCD [a b]
+  (cond (= a b) a
+        (> b a) (recur b a)
+        :else (recur b (- a b))))
+
+(defn LCM [a b] (/  (* a b) (GCD a b)))
+
+(defn calc-business [ms]
+  (->> ms (map :inspected) (sort >) (take 2) (apply *)))
+
 (let [monkeys
       (->> "input11b"
            slurp
            (s/split-lines)
            (partition-all 7)
            (mapv read-monkey))
-      last (nth (iterate round monkeys) 20)]
-  (->> last (map :inspected) (sort >) (take 2) (reduce *')))
+      lcm (->> monkeys (map :div) (reduce LCM))]
+  {:part1 (->> (nth (iterate round monkeys) 20) calc-business)
+   :part2 (binding [relief #(mod % lcm)]
+            (->> (nth (iterate round monkeys) 10000) calc-business))})

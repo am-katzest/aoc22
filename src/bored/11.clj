@@ -41,24 +41,18 @@
     (if (= i (count ms)) ms
         (recur (run-monkey ms i) (inc i)))))
 
-(defn GCD [a b]
-  (cond (= a b) a
-        (> b a) (recur b a)
-        :else (recur b (- a b))))
-
-(defn LCM [a b] (/  (* a b) (GCD a b)))
-
 (defn calc-business [ms cnt]
   (->> (nth (iterate round ms) cnt)
        (map :inspected) (sort >) (take 2) (apply *)))
 
-(let [monkeys
-      (->> "input11b"
-           slurp
-           (s/split-lines)
-           (partition-all 7)
-           (mapv read-monkey))
-      lcm (->> monkeys (map :div) (reduce LCM))]
-  {:part1 (calc-business monkeys 20)
-   :part2 (binding [relief #(mod % lcm)]
-            (calc-business monkeys 10000))})
+(time (let [monkeys
+            (->> "input11b"
+                 slurp
+                 (s/split-lines)
+                 (partition-all 7)
+                 (mapv read-monkey))
+            lcm (->> monkeys (map :div) (reduce *))]
+        {:part1 (calc-business monkeys  20)
+         :part2 (binding [relief #(mod % lcm)]
+                  (calc-business monkeys 10000))}
+        (println lcm)))

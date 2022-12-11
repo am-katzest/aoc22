@@ -10,7 +10,7 @@
   (if op (let [ctr' (+ op ctr)] [ctr' [ctr ctr']])
       [ctr [ctr]]))
 
-(defn draw-pixel [i v] (if (#{-1 0 1} (- i v)) "#" "."))
+(defn draw-pixel [i v] (if (#{-1 0 1} (- i v)) "[]" "  "))
 
 (defn interesting-value [i r] (* (+ 20 (* 40 i)) (nth r 19)))
 

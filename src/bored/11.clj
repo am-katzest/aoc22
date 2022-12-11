@@ -2,21 +2,24 @@
   (:require
    [clojure.string :as s]))
 
-(defn read-int [x] (Integer/parseInt x))
+(defn read-ints [line]
+  (->> (s/split line #"[^0-9-]+")
+       (remove #{""})
+       (map #(Integer/parseInt %))))
 
-(defn read-ints [line] (->> (s/split line #"[^0-9-]+") (remove #{""}) (map read-int)))
+(def first-int (comp first read-ints))
 
 (defn make-op [[_ _ _ _ a op b]]
-  (fn [old] (let [op ({"*" *', "+" +'} op)
-                  or-old #(if (= "old" %) old (read-int %))]
-              (op (or-old a) (or-old b)))))
+  (let [a (first-int a)
+        b (first-int b)
+        op ({"*" *', "+" +'} op)]
+    (fn [old] (op (or a old) (or b old)))))
 
-(defn read-monkey [[id starting op test ift iff _]]
-  (let [t (first (read-ints ift))
-        f (first (read-ints iff))
-        test (first (read-ints test))]
-    {:id (first (read-ints id))
-     :items (vec (read-ints starting))
+(defn read-monkey [[_ starting op test if-true if-false _]]
+  (let [t (first-int if-true)
+        f (first-int if-false)
+        test (first-int test)]
+    {:items (vec (read-ints starting))
      :op (make-op (s/split op #" +"))
      :div test
      :where? #(if (zero? (mod % test)) t f)
@@ -25,15 +28,11 @@
 (defn ^:dynamic relief [x] (bigint (/ x 3)))
 
 (defn- run-monkey [ms i]
-  (let [m (ms i)
-        {:keys [op where? items]} m
-        ms' (loop [[v & t] items ms ms]
-              (if v
-                (let [v' (-> v op relief)
-                      target-m (where? v')]
-                  (recur t (update-in ms [target-m :items] conj v')))
-                ms))]
-    (-> ms'
+  (let [{:keys [op where? items]} (ms i)]
+    (-> (loop [[v & t] items ms ms]
+          (if-not v ms
+                  (let [v' (-> v op relief)]
+                    (recur t (update-in ms [(where? v') :items] conj v')))))
         (update-in [i :inspected] +' (count items))
         (assoc-in  [i :items] []))))
 
@@ -49,8 +48,9 @@
 
 (defn LCM [a b] (/  (* a b) (GCD a b)))
 
-(defn calc-business [ms]
-  (->> ms (map :inspected) (sort >) (take 2) (apply *)))
+(defn calc-business [ms cnt]
+  (->> (nth (iterate round ms) cnt)
+       (map :inspected) (sort >) (take 2) (apply *)))
 
 (let [monkeys
       (->> "input11b"
@@ -59,6 +59,6 @@
            (partition-all 7)
            (mapv read-monkey))
       lcm (->> monkeys (map :div) (reduce LCM))]
-  {:part1 (->> (nth (iterate round monkeys) 20) calc-business)
+  {:part1 (calc-business monkeys 20)
    :part2 (binding [relief #(mod % lcm)]
-            (->> (nth (iterate round monkeys) 10000) calc-business))})
+            (calc-business monkeys 10000))})

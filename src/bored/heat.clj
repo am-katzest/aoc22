@@ -12,6 +12,5 @@
         arr (vec (reverse arr))
         graph (c/heat-map #(get-in arr [(int %2) (int %1)]) 0 x 0 y :xres x :yres y)]
     (doseq [[i [y x]] (map-indexed vector steps)]
-      (c/add-text graph (+ 0.5 x)
-                  (+ 0.5 y) "#"))
+      (c/add-text graph (- x 0.5) (- y 0.5) "#"))
     (i/view graph)))

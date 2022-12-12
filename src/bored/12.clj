@@ -11,13 +11,11 @@
 (defn manhattan [a b]
   (->> (V - a b) (V abs) (apply +)))
 
-(manhattan [0 0] [5 3])
-
 (defn index-of2 [arr search]
-  (first (for [[x row] (map-indexed vector arr)
-               [y val] (map-indexed vector row)
-               :when (= search val)]
-           [x y])))
+  (for [[x row] (map-indexed vector arr)
+        [y val] (map-indexed vector row)
+        :when (= search val)]
+    [x y]))
 
 (def ^:dynamic terrain)
 (def ^:dynamic start)
@@ -35,10 +33,17 @@
   (+ (manhattan (:current x) end)
      (count (:history x))))
 
-(defn A*-ordering [a b]
+;; (defn A*-ordering [a b]
+;;   (if (by = :current a b) 0
+;;       (let [A* (by compare heur a b)]
+;;         (if-not (zero? A*) A*
+;;                 (let [dst (by compare #(manhattan (:current %) end) b a)]
+;;                   (if-not (zero? dst) dst (by compare :current a b)))))))
+(defn A*-ordering [^trail a ^trail b]
   (if (by = :current a b) 0
       (let [A* (by compare heur a b)]
-        (if-not (zero? A*) A* (by compare :current a b)))))
+        (if-not (zero? A*) A*
+                (by compare :current a b)))))
 
 (defn make-child [{:keys [current val history]} direction]
   (let [new-position (V + current direction)]
@@ -52,8 +57,8 @@
 (def directions [[0 1] [0 -1] [1 0] [-1 0]])
 
 (defn make-children [visited x]
-  (filter #(and (some? %) (not (visited (:current x))))
-          (map #(make-child x %) directions)))
+  (filterv #(and (some? %) (not (visited (:current x))))
+           (mapv #(make-child x %) directions)))
 
 (defn pathfind []
   (let [starting (->trail start (get-in terrain start) [])
@@ -72,14 +77,22 @@
                     slurp
                     (s/split-lines)
                     (mapv #(mapv int %)))
-      start-idx (index-of2 raw-data (int \S))
-      end-idx (index-of2 raw-data (int \E))
+      [start-idx] (index-of2 raw-data (int \S))
+      [end-idx] (index-of2 raw-data (int \E))
       data (-> raw-data
                (assoc-in start-idx (int \a))
-               (assoc-in end-idx (int \z)))]
+               (assoc-in end-idx (int \z)))
+      as (sort-by #(manhattan end-idx %) (index-of2 data (int \a)))]
   (binding [terrain data
             start start-idx
             end end-idx]
     (let [ans (pathfind)]
-      (println (count (:history ans)))
-      (h/show-path data (:history ans)))))
+      (h/show-path data (:history ans))
+      (println (count (:history ans)))))
+  (comment (doseq [loc as]
+             (binding [terrain data
+                       start loc
+                       end end-idx]
+               (let [h (pathfind)]
+                 (if h (println "\n" (count (:history h)))
+                     (do (print "#") (flush))))))))

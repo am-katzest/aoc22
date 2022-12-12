@@ -2,15 +2,9 @@
   (:require [clojure.string :as s]
             [bored.heat :as h]))
 
-(defn V
-  "applies operator to each element of vectors"
-  [op & vecs] (apply mapv op vecs))
+(defn V+ [[a A] [b B]] [(+ a b) (+ A B)])
+(defn V- [[a A] [b B]] [(+ a b) (+ A B)])
 
-(defn V+ [[a A] [b B]]
-  [(+ a b) (+ A B)])
-(defn V- [[a A] [b B]]
-  [(+ a b) (+ A B)])
-(defn abs [x] (if (neg? x) (- x) x))
 (defn Vabs [[x y]] [(if (neg? x) (- x) x)
                     (if (neg? y) (- y) y)])
 
@@ -36,25 +30,6 @@
 (defmacro by [f g & a]
   (cons f (map (fn [x] `(~g ~x)) a)))
 
-(defn heur [x]
-  (+ (manhattan (:current x) end)
-     (count (:history x))))
-
-;; (defn A*-ordering [a b]
-;;   (if (by = :current a b) 0
-;;       (let [A* (by compare heur a b)]
-;;         (if-not (zero? A*) A*
-;;                 (let [dst (by compare #(manhattan (:current %) end) b a)]
-;;                   (if-not (zero? dst) dst (by compare :current a b)))))))
-
-(defn A*-ordering [^trail a ^trail b]
-  (if (by = :current a b) 0
-      (let [A* (by compare :heur a b)]
-        (if-not (zero? A*) A*
-                (let [other (by compare :other a b)]
-                  (if-not (zero? other) other
-                          (by compare :current a b)))))))
-
 (defn A*-ordering [^trail a ^trail b]
   (if (by = :current a b) 0
       (let [A* (by compare :heur a b)]
@@ -78,14 +53,14 @@
   (let [starting (->trail start (get-in terrain start) [] -1 -1)
         todo (sorted-set-by A*-ordering)]
     (loop [todos (conj todo starting)
-           visited  #{start}]
+           visited  (transient #{start})]
       (let [choosen (first todos)]
         (cond (= end (:current choosen)) choosen
               (nil? choosen) nil
               :else (recur (-> todos
                                (disj choosen)
                                (into (make-children visited choosen)))
-                           (conj visited (:current choosen))))))))
+                           (conj! visited (:current choosen))))))))
 
 (let [raw-data (->> "input12b"
                     slurp
@@ -97,12 +72,13 @@
                (assoc-in start-idx (int \a))
                (assoc-in end-idx (int \z)))
       as (sort-by #(manhattan end-idx %) (index-of2 data (int \a)))]
-  (time (binding [terrain data
-                  start start-idx
-                  end end-idx]
-          (let [ans (pathfind)]
-            (h/show-path data (:history ans))
-            (println (count (:history ans))))))
+  (time (dotimes [i 10] (binding [terrain data
+                                  start start-idx
+                                  end end-idx]
+                          (let [ans (pathfind)]
+                            ;; (h/show-path data (:history ans))
+                            ;; (println (count (:history ans)))
+                            ans))))
   (comment (doseq [loc as]
              (binding [terrain data
                        start loc

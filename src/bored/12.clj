@@ -6,10 +6,16 @@
   "applies operator to each element of vectors"
   [op & vecs] (apply mapv op vecs))
 
+(defn V+ [[a A] [b B]]
+  [(+ a b) (+ A B)])
+(defn V- [[a A] [b B]]
+  [(+ a b) (+ A B)])
 (defn abs [x] (if (neg? x) (- x) x))
+(defn Vabs [[x y]] [(if (neg? x) (- x) x)
+                    (if (neg? y) (- y) y)])
 
 (defn manhattan [a b]
-  (->> (V - a b) (V abs) (apply +)))
+  (->> (V- a b) (Vabs) (apply +)))
 
 (defn index-of2 [arr search]
   (for [[x row] (map-indexed vector arr)
@@ -24,7 +30,8 @@
 ;┌────┐
 ;│ A* │
 ;└────┘
-(defrecord trail [current val history])
+
+(defrecord trail [current val history heur other])
 
 (defmacro by [f g & a]
   (cons f (map (fn [x] `(~g ~x)) a)))
@@ -39,23 +46,36 @@
 ;;         (if-not (zero? A*) A*
 ;;                 (let [dst (by compare #(manhattan (:current %) end) b a)]
 ;;                   (if-not (zero? dst) dst (by compare :current a b)))))))
+
 (defn A*-ordering [^trail a ^trail b]
   (if (by = :current a b) 0
-      (let [A* (by compare heur a b)]
+      (let [A* (by compare :heur a b)]
         (if-not (zero? A*) A*
-                (by compare :current a b)))))
+                (let [other (by compare :other a b)]
+                  (if-not (zero? other) other
+                          (by compare :current a b)))))))
+
+(defn A*-ordering [^trail a ^trail b]
+  (if (by = :current a b) 0
+      (let [A* (by compare :heur a b)]
+        (if-not (zero? A*) A*
+                (let [other (by compare :other a b)]
+                  (if-not (zero? other) other
+                          (by compare :current a b)))))))
 
 (defn make-children [visited {:keys [current val history]}]
   (for [dir [[0 1] [0 -1] [1 0] [-1 0]]
-        :let [new-loc (V + current dir)]
+        :let [new-loc (V+ current dir)]
         :when (not (visited new-loc))
         :let [new-val (get-in terrain new-loc)]
         :when (some? new-val)
-        :when (>= (- val new-val) -1)]
-    (->trail new-loc new-val (conj history current))))
+        :when (>= (- val new-val) -1)
+        :let [g (count history)
+              h (manhattan end new-loc)]]
+    (->trail new-loc new-val (conj history current) (+ g h) g)))
 
 (defn pathfind []
-  (let [starting (->trail start (get-in terrain start) [])
+  (let [starting (->trail start (get-in terrain start) [] -1 -1)
         todo (sorted-set-by A*-ordering)]
     (loop [todos (conj todo starting)
            visited  #{start}]

@@ -4,10 +4,8 @@
 
 (defn V+ [[a A] [b B]] [(+ a b) (+ A B)])
 (defn V- [[a A] [b B]] [(+ a b) (+ A B)])
-
 (defn Vabs [[x y]] [(if (neg? x) (- x) x)
                     (if (neg? y) (- y) y)])
-
 (defn manhattan [a b]
   (->> (V- a b) (Vabs) (apply +)))
 
@@ -25,18 +23,7 @@
 ;│ A* │
 ;└────┘
 
-(defrecord trail [current val history heur other])
-
-(defmacro by [f g & a]
-  (cons f (map (fn [x] `(~g ~x)) a)))
-
-(defn A*-ordering [^trail a ^trail b]
-  (if (by = :current a b) 0
-      (let [A* (by compare :heur a b)]
-        (if-not (zero? A*) A*
-                (let [other (by compare :other a b)]
-                  (if-not (zero? other) other
-                          (by compare :current a b)))))))
+(defrecord trail [current val history comp])
 
 (defn make-children [visited {:keys [current val history]}]
   (for [dir [[0 1] [0 -1] [1 0] [-1 0]]
@@ -47,11 +34,11 @@
         :when (>= (- val new-val) -1)
         :let [g (count history)
               h (manhattan end new-loc)]]
-    (->trail new-loc new-val (conj history current) (+ g h) g)))
+    (->trail new-loc new-val (conj history current) [(+ g h) g new-loc])))
 
 (defn pathfind []
-  (let [starting (->trail start (get-in terrain start) [] -1 -1)
-        todo (sorted-set-by A*-ordering)]
+  (let [starting (->trail start (get-in terrain start) [] [])
+        todo (sorted-set-by #(compare (:comp %1) (:comp %2)))]
     (loop [todos (conj todo starting)
            visited  (transient #{start})]
       (let [choosen (first todos)]
@@ -71,18 +58,10 @@
       data (-> raw-data
                (assoc-in start-idx (int \a))
                (assoc-in end-idx (int \z)))
-      as (sort-by #(manhattan end-idx %) (index-of2 data (int \a)))]
-  (time (dotimes [i 10] (binding [terrain data
-                                  start start-idx
-                                  end end-idx]
-                          (let [ans (pathfind)]
-                            ;; (h/show-path data (:history ans))
-                            ;; (println (count (:history ans)))
-                            ans))))
-  (comment (doseq [loc as]
-             (binding [terrain data
-                       start loc
+      calc  #(binding [terrain data
+                       start %
                        end end-idx]
-               (let [h (pathfind)]
-                 (if h (println "\n" (count (:history h)))
-                     (do (print "#") (flush))))))))
+               (count (:history (pathfind))))
+      candidates (for [i (range 41)] [i 0])]
+  {:first (calc start-idx)
+   :second (apply min (pmap calc candidates))})

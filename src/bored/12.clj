@@ -45,26 +45,20 @@
         (if-not (zero? A*) A*
                 (by compare :current a b)))))
 
-(defn make-child [{:keys [current val history]} direction]
-  (let [new-position (V + current direction)]
-    (when-let [new-val (get-in terrain new-position)]
-      (let [where-we-came-from (peek history)
-            height-diff (- val new-val)]
-        (when (and (not= new-position where-we-came-from)
-                   (>= height-diff -1))
-          (->trail new-position new-val (conj history current)))))))
-
-(def directions [[0 1] [0 -1] [1 0] [-1 0]])
-
-(defn make-children [visited x]
-  (filterv #(and (some? %) (not (visited (:current x))))
-           (mapv #(make-child x %) directions)))
+(defn make-children [visited {:keys [current val history]}]
+  (for [dir [[0 1] [0 -1] [1 0] [-1 0]]
+        :let [new-loc (V + current dir)]
+        :when (not (visited new-loc))
+        :let [new-val (get-in terrain new-loc)]
+        :when (some? new-val)
+        :when (>= (- val new-val) -1)]
+    (->trail new-loc new-val (conj history current))))
 
 (defn pathfind []
   (let [starting (->trail start (get-in terrain start) [])
         todo (sorted-set-by A*-ordering)]
     (loop [todos (conj todo starting)
-           visited #{}]
+           visited  #{start}]
       (let [choosen (first todos)]
         (cond (= end (:current choosen)) choosen
               (nil? choosen) nil
@@ -83,12 +77,12 @@
                (assoc-in start-idx (int \a))
                (assoc-in end-idx (int \z)))
       as (sort-by #(manhattan end-idx %) (index-of2 data (int \a)))]
-  (binding [terrain data
-            start start-idx
-            end end-idx]
-    (let [ans (pathfind)]
-      (h/show-path data (:history ans))
-      (println (count (:history ans)))))
+  (time (binding [terrain data
+                  start start-idx
+                  end end-idx]
+          (let [ans (pathfind)]
+            (h/show-path data (:history ans))
+            (println (count (:history ans))))))
   (comment (doseq [loc as]
              (binding [terrain data
                        start loc

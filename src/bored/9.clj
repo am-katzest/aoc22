@@ -39,7 +39,7 @@
      slurp
      (s/split-lines)
      (map (fn [line] (let [[x y] (s/split line #" ")]
-                      (repeat (Integer/parseInt y) (directions x)))))
+                       (repeat (Integer/parseInt y) (directions x)))))
      (apply concat)                     ; just a list of directions here
      (simulate 10)
      (map last)                         ; list of tail positions

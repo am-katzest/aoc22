@@ -54,5 +54,4 @@
             lcm (->> monkeys (map :div) (reduce *))]
         {:part1 (calc-business monkeys  20)
          :part2 (binding [relief #(mod % lcm)]
-                  (calc-business monkeys 10000))}
-        (println lcm)))
+                  (calc-business monkeys 10000))}))

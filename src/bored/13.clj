@@ -25,13 +25,12 @@
            (#(str "[" % "]"))
            edn/read-string)
       dividers #{[[2]] [[6]]}]
-  {:part1
-   (->> data (partition 2)
-        (indices #(neg? (apply order %)))
-        (reduce +))
-   :part2
-   (->> data
-        (concat dividers)
-        (sort order)
-        (indices dividers)
-        (reduce *))})
+  {:part1 (->> data
+               (partition 2)
+               (indices #(neg? (apply order %)))
+               (reduce +))
+   :part2 (->> data
+               (concat dividers)
+               (sort order)
+               (indices dividers)
+               (reduce *))})

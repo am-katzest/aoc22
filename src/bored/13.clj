@@ -27,7 +27,7 @@
       dividers #{[[2]] [[6]]}]
   {:part1 (->> data
                (partition 2)
-               (indices #(neg? (apply order %)))
+               (indices (fn [[a b]] (neg? (order a b))))
                (reduce +))
    :part2 (->> data
                (concat dividers)

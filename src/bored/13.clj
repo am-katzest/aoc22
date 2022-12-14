@@ -14,9 +14,11 @@
           (if (zero? fst) (recur as bs) fst))
         (compare a b)))))
 
-(defn indices [f coll]
+(defn indices
+  "returns indices of elements in `coll` matching `p`"
+  [p coll]
   (for [[i x] (map-indexed vector coll)
-        :when (f x)]
+        :when (p x)]
     (inc i)))
 
 (let [data

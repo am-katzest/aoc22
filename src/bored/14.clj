@@ -1,28 +1,17 @@
 (ns bored.14
   (:require [clojure.string :as s]))
 
-(defn V
-  "applies operator to each element of vectors"
-  [op & vecs] (apply mapv op vecs))
-
-(defn normal [x]
+(defn normalize [x]
   (cond (> x 0) 1
         (< x 0) -1
         :else 0))
 
 (defn make-wall [[a b]]
   (if (= a b) [b]
-      (let [dir (V normal (V - b a))]
-        [a b dir]
-        (cons a (make-wall [(V + a dir) b])))))
+      (let [dir (mapv normalize (mapv - b a))]
+        (cons a (make-wall [(mapv + a dir) b])))))
 
-(defn free? [m idx]
-  (nil? (m idx)))
-
-(defn floor? [lp [_ y]]
-  (= (+ 1 lp) y))
-
-(defn expand [line]
+(defn make-walls [line]
   (->> (s/split line #" -> |,")
        (map #(Integer/parseInt %))
        (partition 2)
@@ -30,45 +19,42 @@
        (map make-wall)
        (apply concat)))
 
-(defn fall-sand [lp m floor-stops]
-  (let [starting [500 0]]
-    (loop [loc starting]
-      (if (floor? lp loc) nil
-          (if-let [loc' (first
-                         (for [d [[0 1] [-1 1] [1 1]]
-                               :let [n (V + loc d)]
-                               :when (free? m n)
-                               :when (or (not floor-stops) (not (floor? lp n)))] n))]
-            (recur loc')
-            (assoc m loc :░░))))))
+(defn free? [m idx] (nil? (m idx)))
 
-(defn display-map [m lp l r]
-  (println)
-  (doseq [y (range -1 (+ 2 lp))]
-    (doseq [x (range (dec l) r)]
-      (print (symbol (get m [x y] "  "))))
-    (println)))
+(defn on-level? [l [_ y]] (= l y))
+
+(defn move [grain m lp]
+  (first
+   (for [d [[0 1] [-1 1] [1 1]]
+         :let [n (mapv + grain d)]
+         :when (free? m n)
+         :when (not (on-level? lp n))]
+     n)))
+
+(defn drop-sand [floor-level m]
+  (loop [grain [500 0]]
+    (if-let [grain' (move grain m floor-level)]
+      (recur grain')
+      (assoc m grain :░░ :last-grain grain))))
 
 (let [stones
-      (->> "input14b"
+      (->> "input14a"
            slurp
            (s/split-lines)
-           (map expand)
+           (map make-walls)
            (apply concat))
-      lowest-point (inc (apply  max (map second stones)))
-      leftmost-point (apply  min (map first stones))
-      rightmost-point (inc (apply  max (map  first stones)))
+      lowest-point (apply  max (map second stones))
       starting-map
       (->> stones
            (map (fn [a] [a :██]))
            (into {}))
-      dm #(display-map  % lowest-point leftmost-point rightmost-point)]
-  (println {:part1 (->> starting-map
-                        (iterate #(fall-sand lowest-point % false))
-                        (take-while some?)
-                        count
-                        dec)
-            :part2 (->> starting-map
-                        (iterate #(fall-sand lowest-point % true))
-                        (take-while #(nil? (get % [500 0])))
-                        count)}))
+      simulate (fn [finished?]
+                 (->> starting-map
+                      (iterate #(drop-sand (+ 2 lowest-point) %))
+                      (take-while finished?)
+                      count))
+      last-grain-on-a-floor? #(if-let [g (:last-grain %)]
+                                (not (on-level? (inc lowest-point) g)) true)
+      last-grain-on-top? #(nil? (get % [500 0]))]
+  (println {:part1 (dec (simulate last-grain-on-a-floor?))
+            :part2 (simulate last-grain-on-top?)}))

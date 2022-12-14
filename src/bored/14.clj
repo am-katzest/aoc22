@@ -37,17 +37,15 @@
       (recur grain')
       (assoc m grain :░░ :last-grain grain))))
 
-(let [stones
-      (->> "input14a"
-           slurp
-           (s/split-lines)
-           (map make-walls)
-           (apply concat))
+(let [stones (->> "input14a"
+                  slurp
+                  (s/split-lines)
+                  (map make-walls)
+                  (apply concat))
       lowest-point (apply  max (map second stones))
-      starting-map
-      (->> stones
-           (map (fn [a] [a :██]))
-           (into {}))
+      starting-map (->> stones
+                        (map (fn [a] [a :██]))
+                        (into {}))
       simulate (fn [finished?]
                  (->> starting-map
                       (iterate #(drop-sand (+ 2 lowest-point) %))

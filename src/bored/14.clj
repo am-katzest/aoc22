@@ -23,18 +23,14 @@
 
 (defn on-level? [l [_ y]] (= l y))
 
-(defn move [grain m lp]
-  (first
-   (for [d [[0 1] [-1 1] [1 1]]
-         :let [n (mapv + grain d)]
-         :when (free? m n)
-         :when (not (on-level? lp n))]
-     n)))
-
 (defn drop-sand [floor-level m]
   (loop [grain [500 0]]
-    (if-let [grain' (move grain m floor-level)]
-      (recur grain')
+    (let [children (for [d [[0 1] [-1 1] [1 1]]
+                         :let [n (mapv + grain d)]
+                         :when (free? m n)
+                         :when (not (on-level? floor-level n))]
+                     n)]
+      (for children) (recur grain')
       (assoc m grain :░░ :last-grain grain))))
 
 (let [stones (->> "input14a"

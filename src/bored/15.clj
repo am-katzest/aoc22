@@ -1,5 +1,6 @@
 (ns bored.15
-  (:require [clojure.string :as s]))
+  (:require
+   [clojure.string :as s]))
 
 (defn  merge [[a A] [b B]]
   [(min a b) (max A B)])
@@ -9,21 +10,38 @@
       (<= a B A)
       (<= b a B)))
 
-(defn abs [x] (if (neg? x) (- x) x))
-
 (defn manhattan [[a A] [b B]]
-  (+ (abs (- a b))
-     (abs (- A B))))
-
-(defrecord angled [offset direction interval])
+  (+ (Math/abs (- a b))
+     (Math/abs (- A B))))
 
 (defn pair->point [[s b]]
   [s (manhattan s b)])
+"plane is [x-offset direction]"
+(defn point->planes [[[x y] size]]
+  [[(+ x y size 1) 1]
+   [(+ x y (- size) (- 1)) 1]
+   [(+ x (- y) size 1) -1]
+   [(+ x (- y) (- size) (- 1)) -1]])
 
-(defn point->interval [att [[x y] s]]
-  (let [distance (abs (- att y))
+(defn point->angled-interval [[offset angle] [[x y] s]]
+  (let [x-pos-at-center (+ offset (* angle y))
+        distance (- x x-pos-at-center)
+        len (- s 2)]
+    (when (> s (Math/abs distance))
+      (if (odd? distance)   ;krótkie?
+        (let [center (+ y (/ (dec distance) 2))]
+          [(inc (- center len))
+           (+ center len)])
+        (let [center (+ y (/ distance 2))]
+          [(- center len)
+           (+ center len)])
+        ;; [(- y (- s 2)) (+ y (- s 2))]
+        ))))
+
+(defn point->interval [y-att [[x y] s]]
+  (let [distance (Math/abs (- y-att y))
         length (- s distance)]
-    (when (pos? length)
+    (when (not (neg? length))
       [(- x length)
        (+ x length)])))
 
@@ -38,12 +56,13 @@
 (let [data (->> "input15b"
                 slurp
                 s/split-lines
-                (map (fn [l] (->> (s/split l #"[^0-9-]+")
-                                  rest
-                                  (map #(Integer/parseInt %))
-                                  (partition 2)))))]
+                (mapv (fn [l] (->> (s/split l #"[^0-9-]+")
+                                   rest
+                                   (map #(Integer/parseInt %))
+                                   (partition 2)
+                                   pair->point))))]
   (->> data
-       (map #(point->interval 2000000 (pair->point %)))
+       (map #(point->interval 2000000 %))
        (filter some?)
        (reduce merge-intervals [])
        (map len)

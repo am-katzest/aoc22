@@ -28,15 +28,15 @@
         distance (- x x-pos-at-center)
         len (- s 2)]
     (when (> s (Math/abs distance))
-      (if (odd? distance)   ;krótkie?
-        (let [center (+ y (/ (dec distance) 2))]
-          [(inc (- center len))
-           (+ center len)])
-        (let [center (+ y (/ distance 2))]
-          [(- center len)
-           (+ center len)])
-        ;; [(- y (- s 2)) (+ y (- s 2))]
-        ))))
+      (sort (if (odd? distance)         ;krótkie?
+              (let [center (+ y (/ (dec distance) 2))]
+                [(inc (- center len))
+                 (+ center len)])
+              (let [center (+ y (/ distance 2))]
+                [(- center len)
+                 (+ center len)])
+              ;; [(- y (- s 2)) (+ y (- s 2))]
+              )))))
 
 (defn point->interval [y-att [[x y] s]]
   (let [distance (Math/abs (- y-att y))

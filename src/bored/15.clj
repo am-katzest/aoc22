@@ -82,6 +82,10 @@
      :part2  (->> sensors
                   (map point->planes)
                   (apply concat)
+                  sort
+                  frequencies
+                  (filter (fn [[_ c]] (> c 1)))
+                  (map first)
                   (map #(find-point-on-plane sensors %))
                   (filter some?)
-                  doall)}))
+                  first)}))

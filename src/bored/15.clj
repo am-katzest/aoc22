@@ -18,25 +18,10 @@
   [s (manhattan s b)])
 "plane is [x-offset direction]"
 (defn point->planes [[[x y] size]]
-  [[(+ x y size 1) 1]
-   [(+ x y (- size) (- 1)) 1]
-   [(+ x (- y) size 1) -1]
-   [(+ x (- y) (- size) (- 1)) -1]])
-
-;; (defn point->angled-interval [[offset angle] [[x y] s]]
-;;   (let [x-pos-at-center (+ offset (* angle y))
-;;         distance (- x x-pos-at-center)
-;;         len (- s 2)]
-;;     (when (> s (Math/abs distance))
-;;       (sort (if (odd? distance)         ;krótkie?
-;;               (let [center (+ y (/ (dec distance) 2))]
-;;                 [(inc (- center len))
-;;                  (+ center len)])
-;;               (let [center (+ y (/ distance 2))]
-;;                 [(- center len)
-;;                  (+ center len)])
-;;               ;; [(- y (- s 2)) (+ y (- s 2))]
-;;               )))))
+  [[(+ x y size) -1]
+   [(+ x y (- size)) -1]
+   [(+ x (- y) size) 1]
+   [(+ x (- y) (- size)) 1]])
 
 (defn point->angled-interval [[offset angle] [[x y] s]]
   (let [y-at-cross (* angle (- x offset))
@@ -64,17 +49,27 @@
 (defn len [[a A]]
   (- A a))
 
-(let [data (->> "input15b"
-                slurp
-                s/split-lines
-                (mapv (fn [l] (->> (s/split l #"[^0-9-]+")
-                                   rest
-                                   (map #(Integer/parseInt %))
-                                   (partition 2)
-                                   pair->point))))]
-  (->> data
-       (map #(point->interval 2000000 %))
+(defn cmfp [sensors plane]
+  (->> sensors
+       (map #(point->angled-interval plane %))
        (filter some?)
-       (reduce merge-intervals [])
-       (map len)
-       (apply +)))
+       (reduce merge-intervals [])))
+
+(let [sensors (->> "input15a"
+                   slurp
+                   s/split-lines
+                   (mapv (fn [l] (->> (s/split l #"[^0-9-]+")
+                                      rest
+                                      (map #(Integer/parseInt %))
+                                      (partition 2)
+                                      pair->point))))]
+  {:part1 (->> sensors
+               (map #(point->interval 2000000 %))
+               (filter some?)
+               (reduce merge-intervals [])
+               (map len)
+               (apply +))}
+  {:part2 (->> sensors
+               (map point->planes)
+               (apply concat)
+               (map #(cmfp sensors %)))})

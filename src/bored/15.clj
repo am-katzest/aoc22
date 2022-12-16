@@ -60,32 +60,25 @@
 
 (def ^:dynamic mapsize 20)
 
-(defn valids [[off angle]]
-  (let [off (if (pos? angle) off (- mapsize off))]
-    (intersect [0 mapsize]
-               [(- off)
-                (- mapsize off)])))
-
 (defn find-gap [[a A] [b B]]
   (inc (if (< a b) A B)))
 
 (defn cmfp [sensors [off angle :as plane]]
-  (when-let [bounds (valids plane)]
-    (let [ans (->> sensors
-                   (map #(point->angled-interval plane %))
-                   (filter some?)
-                   (map #(intersect bounds %))
-                   (filter some?)
-                   (reduce merge-intervals []))]
-      (when  (not= 1 (count ans))
-        (let [y (apply find-gap ans)
-              x (* angle (+ (* angle off) y))]
-          (+ (* x 4000000) y))))))
+  (let [ans (->> sensors
+                 (map #(point->angled-interval plane %))
+                 (filter some?)
+                 (map #(intersect bounds %))
+                 (filter some?)
+                 (reduce merge-intervals []))]
+    (when (not= 1 (count ans))
+      (let [y (apply find-gap ans)
+            x (* angle (+ (* angle off) y))]
+        (+ (* x 4000000) y)))))
 
 (time
  (println
-  (binding [mapsize 20]
-    (let [sensors (->> "input15a"
+  (binding [mapsize 4000000]
+    (let [sensors (->> "input15b"
                        slurp
                        s/split-lines
                        (mapv (fn [l] (->> (s/split l #"[^0-9-]+")
@@ -102,13 +95,6 @@
        :part2  (->> sensors
                     (map point->planes)
                     (apply concat)
-                    (map #(cmfp sensors %))
+                    (map #(find-point-on-plane sensors %))
                     (filter some?)
-                    first)}
-      (dotimes [_ 100]
-        (->> sensors
-             (map point->planes)
-             (apply concat)
-             (map #(cmfp sensors %))
-             (filter some?)
-             first))))))
+                    first)}))))

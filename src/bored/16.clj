@@ -18,14 +18,6 @@
                            (fn [lst] (-> (merge-with min lst replacements)
                                          (dissoc nam))))))
             (dissoc m nam) targets)))
-(defn stupid-chooser [avialable] (ffirst avialable))
-
-(defn idk [[name {:keys [val targets]}] Δs rem-time m]
-  (for [[x distance] targets
-        :let [whole (m x)
-              value (:val whole)
-              t (- rem-time distance x)]]
-    [x  value]))
 
 (defn complete [nodes]
   (let [all (into #{} (keys nodes))]
@@ -39,6 +31,26 @@
                                                          (reduce nodes rrest)
                                                          (get-in [src :targets]))]] best))}]))))
 
+(defn idk  [starting nodes]
+  ((fn ik [name pool rem-time sum]
+     (let [candidates
+           (->> (for [x pool
+                      :let [whole (nodes x)
+                            value (:val whole)
+                            d (inc (get-in whole [:targets name]))
+                            t (- rem-time d)
+                            cost-f (/ d rem-time)
+                            sum (* value t)]
+                      :when (>= t 0)]
+                  [x  (int (/ sum cost-f)) d sum])
+                (sort-by second >)
+                ((fn [x] (println x) x))
+                1)]
+       (if (zero? (count candidates)) sum
+           (apply max (for [[n _ c s] candidates]
+                        (ik n (disj pool n) (- rem-time c) (+ sum s)))))))
+   (first starting) (disj (set (keys nodes)) (first starting)) 30 0))
+
 (let [raw-nodes (->> "input16a"
                      slurp
                      s/split-lines
@@ -50,4 +62,4 @@
                       (map first))
       nodes   (complete (reduce prune (into {} raw-nodes) useless))
       [starting-node] (filter (fn [[x _]] (= starting x)) nodes)]
-  (idk starting-node 0 30 nodes))
+  (idk starting-node nodes))

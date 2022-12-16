@@ -9,6 +9,7 @@
   (or (<= a b A)
       (<= a B A)
       (<= b a B)))
+
 (defn touch? [[a A] [b B]]
   (or (<= (dec a) b (inc A))
       (<= (dec a) B (inc A))
@@ -57,13 +58,14 @@
 (defn len [[a A]]
   (- A a))
 
+(def ^:dynamic mapsize 20)
+
 (defn valids [[off angle]]
-  (let [sa 0
-        sb  20 ;; 4000000
-        off (if (pos? angle) off (- sb off))]
-    (intersect [sa sb]
-               [(- sa off)
-                (- sb off)])))
+  (let [off (if (pos? angle) off (- mapsize off))]
+    (intersect [0 mapsize]
+               [(- off)
+                (- mapsize off)])))
+
 (defn find-gap [[a A] [b B]]
   (inc (if (< a b) A B)))
 
@@ -80,24 +82,33 @@
               x (* angle (+ (* angle off) y))]
           (+ (* x 4000000) y))))))
 
-(time (println (let [sensors (->> "input15a"
-                                  slurp
-                                  s/split-lines
-                                  (mapv (fn [l] (->> (s/split l #"[^0-9-]+")
-                                                     rest
-                                                     (map #(Integer/parseInt %))
-                                                     (partition 2)
-                                                     pair->point))))]
-                 {:part1 (->> sensors
-                              (map #(point->interval 10 %))
-                              (filter some?)
-                              (reduce merge-intervals [])
-                              (map len)
-                              (apply +))
-                  :part2 (->> sensors
-                              (map point->planes)
-                              (apply concat)
-                              (map #(cmfp sensors %))
-                              (filter some?)
-                              first)})))
-(point->planes [[8 7] 10])
+(time
+ (println
+  (binding [mapsize 20]
+    (let [sensors (->> "input15a"
+                       slurp
+                       s/split-lines
+                       (mapv (fn [l] (->> (s/split l #"[^0-9-]+")
+                                          rest
+                                          (map #(Integer/parseInt %))
+                                          (partition 2)
+                                          pair->point))))]
+      {:part1 (->> sensors
+                   (map #(point->interval (/ mapsize 2) %))
+                   (filter some?)
+                   (reduce merge-intervals [])
+                   (map len)
+                   (apply +))
+       :part2  (->> sensors
+                    (map point->planes)
+                    (apply concat)
+                    (map #(cmfp sensors %))
+                    (filter some?)
+                    first)}
+      (dotimes [_ 100]
+        (->> sensors
+             (map point->planes)
+             (apply concat)
+             (map #(cmfp sensors %))
+             (filter some?)
+             first))))))

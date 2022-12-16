@@ -8,7 +8,6 @@
            (into {} (map (fn [x] [x 1]) destinations))}]))
 
 (defn prune [m nam]
-  (println (type m) (type nam))
   (let [targets (:targets (m nam))]
     (reduce (fn [c [k v]]
               (let [replacements (->> k
@@ -19,8 +18,27 @@
                            (fn [lst] (-> (merge-with min lst replacements)
                                          (dissoc nam))))))
             (dissoc m nam) targets)))
-(defn idk [node Δs rem-time m]
-  (let [choices]))
+(defn stupid-chooser [avialable] (ffirst avialable))
+
+(defn idk [[name {:keys [val targets]}] Δs rem-time m]
+  (for [[x distance] targets
+        :let [whole (m x)
+              value (:val whole)
+              t (- rem-time distance x)]]
+    [x  value]))
+
+(defn complete [nodes]
+  (let [all (into #{} (keys nodes))]
+    (into {} (for [src all
+                   :let [rest (disj all src)]]
+               [src {:val (get-in nodes [src :val])
+                     :targets (into {}
+                                    (for [dst rest
+                                          :let [rrest (disj rest dst)]
+                                          :let [best (-> prune
+                                                         (reduce nodes rrest)
+                                                         (get-in [src :targets]))]] best))}]))))
+
 (let [raw-nodes (->> "input16a"
                      slurp
                      s/split-lines
@@ -30,6 +48,6 @@
                       (remove (fn [[name {:keys [val]}]]
                                 (or (< 0 val) (= name starting))))
                       (map first))
-      nodes   (reduce prune (into {} raw-nodes) useless)
-      [starting-node] (filter (fn [x _] (= starting x)) nodes)]
-  starting-node)
+      nodes   (complete (reduce prune (into {} raw-nodes) useless))
+      [starting-node] (filter (fn [[x _]] (= starting x)) nodes)]
+  (idk starting-node 0 30 nodes))

@@ -23,20 +23,31 @@
    [(+ x (- y) size 1) -1]
    [(+ x (- y) (- size) (- 1)) -1]])
 
+;; (defn point->angled-interval [[offset angle] [[x y] s]]
+;;   (let [x-pos-at-center (+ offset (* angle y))
+;;         distance (- x x-pos-at-center)
+;;         len (- s 2)]
+;;     (when (> s (Math/abs distance))
+;;       (sort (if (odd? distance)         ;krótkie?
+;;               (let [center (+ y (/ (dec distance) 2))]
+;;                 [(inc (- center len))
+;;                  (+ center len)])
+;;               (let [center (+ y (/ distance 2))]
+;;                 [(- center len)
+;;                  (+ center len)])
+;;               ;; [(- y (- s 2)) (+ y (- s 2))]
+;;               )))))
+
 (defn point->angled-interval [[offset angle] [[x y] s]]
-  (let [x-pos-at-center (+ offset (* angle y))
-        distance (- x x-pos-at-center)
-        len (- s 2)]
-    (when (> s (Math/abs distance))
-      (sort (if (odd? distance)         ;krótkie?
-              (let [center (+ y (/ (dec distance) 2))]
-                [(inc (- center len))
-                 (+ center len)])
-              (let [center (+ y (/ distance 2))]
-                [(- center len)
-                 (+ center len)])
-              ;; [(- y (- s 2)) (+ y (- s 2))]
-              )))))
+  (let [y-at-cross (* angle (- x offset))
+        y-diff (- y y-at-cross)
+        vlen (if (even? y-diff)
+               (int (/ (dec s) 2))
+               (- (int (/ s 2)) 1/2))
+        mid-cross (- y (/ y-diff 2))]
+    (when (> s (Math/abs y-diff))
+      [(- mid-cross vlen)
+       (+ mid-cross vlen)])))
 
 (defn point->interval [y-att [[x y] s]]
   (let [distance (Math/abs (- y-att y))

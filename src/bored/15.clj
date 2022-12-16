@@ -59,7 +59,7 @@
                  (map #(point->angled-interval plane %))
                  (filter some?)
                  (reduce merge-intervals []))]
-    (when (not= 1 (count ans))
+    (when (= 2 (count ans))
       (let [y (apply find-gap ans)
             x (* angle (+ (* angle off) y))]
         (+ (* x 4000000) y)))))
@@ -84,4 +84,4 @@
                   (apply concat)
                   (map #(find-point-on-plane sensors %))
                   (filter some?)
-                  first)}))
+                  doall)}))

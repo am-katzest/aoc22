@@ -19,15 +19,17 @@
                            (fn [lst] (-> (merge-with min lst replacements)
                                          (dissoc nam))))))
             (dissoc m nam) targets)))
-
-(let [raw-nodes (->> "input16b"
+(defn idk [node Δs rem-time m]
+  (let [choices]))
+(let [raw-nodes (->> "input16a"
                      slurp
                      s/split-lines
-                     (map read-node)
-                     (into {}))
+                     (map read-node))
       starting (ffirst raw-nodes)
       useless    (->> raw-nodes
                       (remove (fn [[name {:keys [val]}]]
                                 (or (< 0 val) (= name starting))))
-                      (map first))]
-  (mapv println (reduce prune raw-nodes useless)))
+                      (map first))
+      nodes   (reduce prune (into {} raw-nodes) useless)
+      [starting-node] (filter (fn [x _] (= starting x)) nodes)]
+  starting-node)

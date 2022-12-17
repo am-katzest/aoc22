@@ -15,33 +15,33 @@
            :targets
            (into {} (map (fn [x] [x 1]) destinations))}]))
 
-(defn prune [m nam]
-  (let [targets (:targets (m nam))]
-    (reduce (fn [c [k v]]
-              (let [replacements (->> k
-                                      (dissoc targets)
-                                      (map (fn [[i x]] [i (+ v x)]))
-                                      (into {}))]
-                (update-in c [k :targets]
-                           (fn [lst] (-> (merge-with min lst replacements)
-                                         (dissoc nam))))))
-            (dissoc m nam) targets)))
-
 (defn complete [nodes]
-  (let [all (into #{} (keys nodes))]
-    (into {} (for [src all
-                   :let [rest (disj all src)]]
-               [src {:val (get-in nodes [src :val])
-                     :targets (into {}
-                                    (for [dst rest
-                                          :let [rrest (disj rest dst)]
-                                          :let [best (-> prune
-                                                         (reduce nodes rrest)
-                                                         (get-in [src :targets]))]] best))}]))))
+  (let [c (count nodes)]
+    (->> (for [[x {:keys [val targets]}] nodes
+               :let [ans (loop [slns targets]
+                           (if (= (dec c) (count slns)) slns
+                               (recur (->>
+                                       (for [[n d] slns
+                                             :let [further (get-in nodes [n :targets])]
+                                             [cand d2] further
+                                             :when (not= cand x)
+                                             :let [dt (+ d d2)
+                                                   ex (targets cand)]
+                                             :when (or (nil? ex) (> dt ex))]
+                                         [cand dt])
+                                       (into {})
+                                       (merge-with min slns)))))]]
+           [x {:val val :targets ans}])
+         (into {}))))
+
+(complete {"AA" {:val 1 :targets {"BB" 5 "DD" 1}}
+           "BB" {:val 2 :targets {"AA" 5, "CC", 1}}
+           "CC" {:val 3 :targets {"BB" 1, "DD", 2}}
+           "DD" {:val 4 :targets {"CC" 2 "AA" 1}}})
 
 (defn idk  [starting nodes]
   ((fn ik [name pool rem-time sum]
-     (println name (- 30 rem-time) sum)
+     ;; (println name (- 30 rem-time) sum)
      (let [candidates
            (->> (for [x pool
                       :let [whole (nodes x)
@@ -50,17 +50,16 @@
                             t (- rem-time d)
                             ;; cost-f (/ d rem-time)
                             sum (* value t)
-                            heur (/ sum d)]
+                            ;; heur (/ sum d)
+                            ]
                       :when (pos? sum)]
-                  [x (replay x) (dec t) sum])
-                (sort-by second >)
-                ((fn [x] (println x) x))
-                (take 1))]
+                  [x nil (dec t) sum]))]
        (if (zero? (count candidates)) sum
-           (apply max (for [[n _ t s] candidates]
-                        (ik n (disj pool n) t (+ sum s)))))))
-   starting (disj (set (keys nodes)) starting) 30 0))
-(let [raw-nodes (->> "input16c"
+           (reduce max (for [[n _ t s] candidates]
+                         (ik n (disj pool n) t (+ sum s)))))))
+   starting (disj (set (keys nodes)) starting) 29 0))
+
+(let [raw-nodes (->> "input16a"
                      slurp
                      s/split-lines
                      (map read-node))
@@ -69,5 +68,6 @@
                       (remove (fn [[name {:keys [val]}]]
                                 (or (< 0 val) (= name starting))))
                       (map first))
-      nodes   (complete (reduce prune (into {} raw-nodes) useless))]
-  (time (idk starting nodes)))
+      nodes   (apply dissoc (complete (into {} raw-nodes)) useless)]
+  (println "done")
+  (println (idk starting  nodes)))

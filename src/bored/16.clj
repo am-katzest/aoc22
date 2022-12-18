@@ -48,18 +48,15 @@
                             value (:val whole)
                             d (get-in whole [:targets name])
                             t (- rem-time d)
-                            ;; cost-f (/ d rem-time)
-                            sum (* value t)
-                            ;; heur (/ sum d)
-                            ]
+                            sum (* value t)]
                       :when (pos? sum)]
                   [x nil (dec t) sum]))]
        (if (zero? (count candidates)) sum
-           (reduce max (for [[n _ t s] candidates]
-                         (ik n (disj pool n) t (+ sum s)))))))
+           (for [[n _ t s] candidates]
+             (ik n (disj pool n) t (+ sum s))))))
    starting (disj (set (keys nodes)) starting) 29 0))
 
-(let [raw-nodes (->> "input16a"
+(let [raw-nodes (->> "input16c"
                      slurp
                      s/split-lines
                      (map read-node))

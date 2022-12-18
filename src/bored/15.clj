@@ -56,8 +56,7 @@
 
 (defn find-point-on-plane [sensors [off angle :as plane]]
   (let [ans (->> sensors
-                 (map #(point->angled-interval plane %))
-                 (filter some?)
+                 (keep #(point->angled-interval plane %))
                  (reduce merge-intervals []))]
     (when (= 2 (count ans))
       (let [y (apply find-gap ans)
@@ -74,14 +73,12 @@
                                         (partition 2)
                                         pair->point))))]
     {:part1 (->> sensors
-                 (map #(point->horizontal-interval (/ mapsize 2) %))
-                 (filter some?)
+                 (keep #(point->horizontal-interval (/ mapsize 2) %))
                  (reduce merge-intervals [])
                  (map len)
                  (apply +))
      :part2  (->> sensors
                   (map point->planes)
                   (apply concat)
-                  (map #(find-point-on-plane sensors %))
-                  (filter some?)
+                  (keep #(find-point-on-plane sensors %))
                   first)}))

@@ -15,33 +15,33 @@
            :targets
            (into {} (map (fn [x] [x 1]) destinations))}]))
 
+(complete {"AA" {:val 1 :targets {"DD" 10 "BB" 5}}
+           "BB" {:val 2 :targets {"AA" 5, "CC", 1}}
+           "XX" {:val 2 :targets {"CC" 1}}
+           "CC" {:val 3 :targets {"BB" 1, "DD", 2, "XX" 1}}
+           "DD" {:val 4 :targets {"CC" 2 "AA" 10}}})
 (defn complete [nodes]
   (let [c (count nodes)]
     (->> (for [[x {:keys [val targets]}] nodes
-               :let [ans (loop [slns targets]
-                           (if (= (dec c) (count slns)) slns
+               :let [ans (loop [paths targets
+                                c c]
+                           (if (= c 0) paths
                                (recur (->>
-                                       (for [[n d] slns
-                                             :let [further (get-in nodes [n :targets])]
-                                             [cand d2] further
-                                             :when (not= cand x)
-                                             :let [dt (+ d d2)
-                                                   ex (targets cand)]
-                                             :when (or (nil? ex) (> dt ex))]
-                                         [cand dt])
-                                       (into {})
-                                       (merge-with min slns)))))]]
+                                       (for [[n d] paths
+                                             :let [one-getting-skipped (get-in nodes [n :targets])]]
+                                         (into {}
+                                               (for [[cand d2] one-getting-skipped
+                                                     :when (not= cand x)
+                                                     :let [dt (+ d d2)
+                                                           ex (targets cand)]
+                                                     :when (or (nil? ex) (< dt ex))]
+                                                 [cand dt])))
+                                       (apply merge-with min paths)) (dec c))))]]
            [x {:val val :targets ans}])
          (into {}))))
 
-(complete {"AA" {:val 1 :targets {"BB" 5 "DD" 1}}
-           "BB" {:val 2 :targets {"AA" 5, "CC", 1}}
-           "CC" {:val 3 :targets {"BB" 1, "DD", 2}}
-           "DD" {:val 4 :targets {"CC" 2 "AA" 1}}})
-
 (defn idk  [starting nodes]
   ((fn ik [name pool rem-time sum]
-     ;; (println name (- 30 rem-time) sum)
      (let [candidates
            (->> (for [x pool
                       :let [whole (nodes x)
@@ -52,8 +52,8 @@
                       :when (pos? sum)]
                   [x nil (dec t) sum]))]
        (if (zero? (count candidates)) sum
-           (for [[n _ t s] candidates]
-             (ik n (disj pool n) t (+ sum s))))))
+           (apply max (for [[n _ t s] candidates]
+                        (ik n (disj pool n) t (+ sum s)))))))
    starting (disj (set (keys nodes)) starting) 29 0))
 
 (let [raw-nodes (->> "input16c"
@@ -66,5 +66,4 @@
                                 (or (< 0 val) (= name starting))))
                       (map first))
       nodes   (apply dissoc (complete (into {} raw-nodes)) useless)]
-  (println "done")
-  (println (idk starting  nodes)))
+  (idk starting nodes))

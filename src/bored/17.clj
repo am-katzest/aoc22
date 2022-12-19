@@ -1,6 +1,12 @@
 (ns bored.17
   (:require [clojure.string :as s]))
 
+(defn cycle-i [n]
+  (let [c (count n)]
+    (map-indexed
+     (fn [i x] (with-meta x {:idx (mod i c)}))
+     (cycle n))))
+
 (defn make-block [shapes]
   (let [X (count (first shapes))
         Y (count shapes)]
@@ -17,7 +23,7 @@
        (remove #{[""]})
        (map reverse)
        (map make-block)
-       cycle))
+       cycle-i))
 
 (defn inside-wall? [[x y :as c] fallen]
   (or (fallen c)
@@ -71,10 +77,39 @@
                  slurp
                  (keep {\> [1 0]
                         \< [-1 0]})
-                 cycle)]
-  (nth (reduce fall-block [gusts #{} 0]  (take 2022 blocks)) 2))
-(->> "input17b"
-     slurp
-     (keep {\> [1 0]
-            \< [-1 0]})
-     count)
+                 cycle-i)
+      data
+      (->> blocks
+           (take 4000)
+           (reductions fall-block [gusts #{} 0]))]
+  (->>
+   data
+   (map-indexed (fn [i [[g] _ h]]
+                  {:gust (:idx (meta g))
+                   :block  (mod  i 5)
+                   :height h
+                   :absolute i}))
+   (group-by #(dissoc % :height :absolute))
+   (keep (fn [[_ r]] (when (> (count r) 1) r)))
+   (keep (fn [xs] (let [xs (sort-by :absolute xs)
+                        iteration-length (->> xs
+                                              (map :absolute)
+                                              (partition 2 1)
+                                              (map (fn [[a b]]  (- b a)))
+                                              first
+                                              bigint)
+                        iteration-height (->> xs
+                                              (map :height)
+                                              (partition 2 1)
+                                              (map (fn [[a b]]  (- b a)))
+                                              first
+                                              bigint)
+                        target 1000000000000
+                        height-at-some-point (:height (first xs))
+                        iter-at-some-point (:absolute (first xs))
+                        remaining-iters (- target iter-at-some-point)
+                        repeats (bigint (/ remaining-iters iteration-length))
+                        iter-gain-from-repeats (* repeats  iteration-length)
+                        missing-steps (- remaining-iters iter-gain-from-repeats)]
+                    (when (= 0 missing-steps)
+                      (+ (* iteration-height repeats) height-at-some-point)))))))

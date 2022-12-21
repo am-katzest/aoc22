@@ -34,17 +34,18 @@
 
 (defn idk  [starting nodes]
   ((fn ik [name pool rem-time sum]
-     (apply max-key ffirst [[sum name rem-time]]
-            (->> (for [x pool
-                       :let [node (nodes x)
-                             distance (get-in node [:targets name])
-                             rem-time' (- rem-time distance 1)
-                             total-gain (* (:val node) rem-time')]
-                       :when (> rem-time 5)]
-                   (ik x (disj pool x) rem-time' (+ sum total-gain))))))
+     (let [children (->> (for [x pool
+                               :let [node (nodes x)
+                                     distance (get-in node [:targets name])
+                                     rem-time' (- rem-time distance 1)
+                                     total-gain (* (:val node) rem-time')]
+                               :when (pos? total-gain)]
+                           (ik x (disj pool x) rem-time' (+ sum total-gain))))]
+       (concat (if (empty? children) []
+                   (apply max-key ffirst children)) [[sum name rem-time]])))
    starting (disj (set (keys nodes)) starting) 30 0))
 
-(let [raw-nodes (->> "input16a"
+(let [raw-nodes (->> "input16c"
                      slurp
                      s/split-lines
                      (map read-node))

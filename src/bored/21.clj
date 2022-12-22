@@ -11,46 +11,28 @@
               {:eq [b a c]}
               {:value (i a)})]))
 
-(defn monkeys [monkeys]
+(defn monkeys2 [monkeys part2]
   (let [mvars (into {} (map (fn [[k _]] [k (lvar)]) monkeys))]
     (run 1 [q]
-         (== q (mvars "root"))
+         (== q {:human (mvars "humn")
+                :root (mvars "root")})
          (and* (for [[name job] monkeys
                      :let [v (mvars name)]]
-                 (if-let [n (:value job)]
-                   (== v n)
-                   (let [[op l r] (:eq job)
-                         l (mvars l)
-                         r (mvars r)]
-                     (condp = op
-                       "*" (fd/* l r v)
-                       "/" (fd/* r v l)
-                       "+" (fd/+ l r v)
-                       "-" (fd/+ v r l)))))))))
+                 (let [[op l r] (:eq job)
+                       l (mvars l)
+                       r (mvars r)]
+                   (cond
+                     (and part2 (= name "root")) (== l r)
+                     (and part2 (= name "humn")) (== 0 0)
+                     (= "*" op) (fd/* l r v)
+                     (= "/" op) (fd/* r v l)
+                     (= "+" op) (fd/+ l r v)
+                     (= "-" op) (fd/+ v r l)
+                     (nil? op) (== v (:value job)))))))))
 
-(defn monkeys2 [monkeys]
-  (let [mvars (into {} (map (fn [[k _]] [k (lvar)]) monkeys))]
-    (run 1 [q]
-         (== q (mvars "humn"))
-         (and* (for [[name job] monkeys
-                     :let [v (mvars name)]]
-                 (cond
-                   (= name "root")
-                   (let [[_ l r] (:eq job)]
-                     (== (mvars l) (mvars r)))
-                   (= name "humn") (== 0 0)
-                   (:value job) (== v (:value job))
-                   :else (let [[op l r] (:eq job)
-                               l (mvars l)
-                               r (mvars r)]
-                           (condp = op
-                             "*" (fd/* l r v)
-                             "/" (fd/* r v l)
-                             "+" (fd/+ l r v)
-                             "-" (fd/+ v r l)))))))))
-
-(->> "input21b"
-     slurp
-     s/split-lines
-     (map read-monkey)
-     monkeys2)
+(let [data (->> "input21a"
+                slurp
+                s/split-lines
+                (map read-monkey))]
+  {:part1 (monkeys2 data false)
+   :part2 (monkeys2 data true)})

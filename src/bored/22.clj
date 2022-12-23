@@ -1,15 +1,11 @@
 (ns bored.22
-  (:require [clojure.string :as s]
-            [clojure.set :as set]))
+  (:require [clojure.string :as s]))
 
-(def dir->pretty {0 :right
-                  1 :down
-                  2 :left
-                  3 :up})
 (def dir->delta {0 [1 0]
                  1 [0 -1]
                  2 [-1 0]
                  3 [0 1]})
+
 (def l->angle {\R -1 \L 1})
 
 (defn turn [[loc direction] change]
@@ -19,30 +15,39 @@
   (for [[j s] (map-indexed vector ss)
         :when (not= s \space)]
     [[(inc j) (inc i)] s]))
-(println "restart")
+
 (defn read-instructions [instructions]
   (->> instructions
        (partition-by #{\R \L})
        (map (fn [xs] (if (#{\R \L} (first xs))
                        (first xs)
                        (Integer/parseInt (apply str xs)))))))
+
 (def ^:dynamic terrain)
 
+(defn outside-map? [coords & _]
+  (nil? (terrain coords)))
+
+(defn ^:dynamic wrap-around [[coords heading]]
+  (let [delta (dir->delta heading)]
+    (loop [c (mapv - coords delta)]
+      (if (outside-map? c)
+        [(mapv + c delta) heading]
+        (recur (mapv - c delta))))))
+
 (defn roll [[coords heading]]
-  [coords heading])
+  (if (outside-map? coords)
+    (wrap-around [coords heading])
+    [coords heading]))
 
 (defn forward [[[x y] dir]]
   (let [[dx dy] (dir->delta dir)]
     [[(+ x dx) (+ y dy)] dir]))
 
-(defn can-move? [[coords _]]
-  (= \. (terrain coords)))
-
 (defn inside-wall? [[coords _]]
   (= \# (terrain coords)))
 
 (defn walk [pos [i & is]]
-  (println pos)
   (cond
     (nil? i) pos
     (#{\R \L} i) (recur (turn pos i) is)
@@ -50,9 +55,11 @@
     :else (let [pos' (roll (forward pos))]
             (if (inside-wall? pos') (recur pos is)
                 (recur pos' (cons (dec i) is))))))
-;; [[x y] dir]
 
-(let [[terrain-lines _ [ins-line]] (->> "input22a"
+(defn password [[[x y] dir]]
+  (+ dir (* 4 x) (* 1000 y)))
+
+(let [[terrain-lines _ [ins-line]] (->> "input22b"
                                         slurp
                                         s/split-lines
                                         (partition-by #{""}))
@@ -66,4 +73,4 @@
                        (sort-by ffirst)
                        ffirst) 0]]
   (binding [terrain terr]
-    (walk leftupmost ins)))
+    (password (walk leftupmost ins))))

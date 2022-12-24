@@ -59,7 +59,10 @@
 (defn password [[[x y] dir]]
   (+ dir (* 4 x) (* 1000 y)))
 
-(let [[terrain-lines _ [ins-line]] (->> "input22b"
+(def rotation-matrix
+  {[[1 1] 3] [[2 0] 1]
+   [[2 0] 3] [[1 1] 1]})
+(let [[terrain-lines _ [ins-line]] (->> "input22a"
                                         slurp
                                         s/split-lines
                                         (partition-by #{""}))

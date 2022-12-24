@@ -1,6 +1,5 @@
 (ns bored.24
-  (:require [clojure.string :as s]
-            [clojure.set :as set]))
+  (:require [clojure.string :as s]))
 
 (defn V+ [[a A] [b B]] [(+ a b) (+ A B)])
 
@@ -26,6 +25,7 @@
                             :else [[c cell] cell])]
               :when (some? v)]
           v)))
+
 (defn advance [coll]
   (let [dirs {\v [0 1] \< [-1 0] \> [1 0] \^ [0 -1]}
         roll-1 (fn [max x] (cond (= 0 x) (dec max)
@@ -86,18 +86,17 @@
       (doseq [y (range (first ys) (inc (last ys)))]
         (print (if (coll [y x])  "{}" "  "))))))
 
-(let [init (->> "input24a"
+(let [init (->> "input24b"
                 slurp
                 s/split-lines
                 read-terr)
       init (assoc init [(V+ (:start init) [0 -1]) \#] \#)
       init (assoc init [(V+ (:end init) [0 1]) \#] \#)
-      terr (->>
-            init
-            (iterate advance')
-            (map grab-walls')
-            (take 5000)
-            (into []))
+      terr (->> init
+                (iterate advance')
+                (map grab-walls')
+                (take 5000)
+                (into []))
       s (:start init)
       e (:end init)]
   (time (binding [terrain terr]

@@ -27,7 +27,7 @@
               :when (some? v)]
           v)))
 (defn advance [coll]
-  (let [dirs {\v [0 -1] \< [-1 0] \> [1 0] \^ [0 1]}
+  (let [dirs {\v [0 1] \< [-1 0] \> [1 0] \^ [0 -1]}
         roll (fn [[x y]]
                [(mod x (:x coll))
                 (mod y (:y coll))])

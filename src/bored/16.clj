@@ -1,5 +1,7 @@
 (ns bored.16
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as s]
+            [clojure.test :as t]
+            [clojure.set :as set]))
 
 (defn unnil [num]
   (let [a1 (int (/ num 26))
@@ -33,33 +35,60 @@
          [x {:val val :targets ans}])
        (into {})))
 
-(defn best-path [current nodes avialable time acc]
+(defn best-path-heur [current nodes avialable time acc]
   (let [whole (nodes current)
         gain (* time (:val whole))
         next-steps (for [[x d] (:targets whole)
                          :when (avialable x)
                          :let [time-to (inc d)]
-                         :when (pos? (- time time-to))]
-                     [(replay x) x time-to])
-        ;; next-steps (take 1 (sort-by first > next-steps))
-        acc' (+ acc gain)
-        me [acc' current (- 30  time)]]
+                         :when (pos? (- time time-to))
+                         :let [val (get-in nodes [x :val])]]
+                     [(/ (* val (- time time-to)) time-to) x time-to])
+        tresh (->> next-steps
+                   (map first)
+                   (apply max 0)
+                   (* 1/3))
+        next-steps (filter #(> (first %) tresh) next-steps)
+        acc' (+ acc gain)]
     (if (seq next-steps)
-      (conj
-       (apply max-key ffirst [[0]]
-              (for [[_ x t] next-steps]
-                (best-path x nodes (disj avialable x) (- time t) acc')))
-       me)
-      [me])))
+      (apply max acc'
+             (for [[_ x t] next-steps]
+               (best-path-heur x nodes (disj avialable x) (- time t) acc')))
+      acc')))
 
-(let [raw-nodes (->> "input16c"
-                     slurp
-                     s/split-lines
-                     (map read-node))
-      starting (ffirst raw-nodes)
-      useless    (->> raw-nodes
-                      (remove (fn [[name {:keys [val]}]]
-                                (or (< 0 val) (= name starting))))
-                      (map first))
-      nodes   (apply dissoc (complete (into {} raw-nodes)) useless)]
-  (best-path starting nodes (disj (into #{} (keys nodes)) starting) 30 0))
+(defn power [s]
+  (loop [[f & r] (seq s) p '(())]
+    (if f (recur r (concat p (map (partial cons f) p)))
+        p)))
+
+(defn power-set [s] (set (map set (power s)))) ;copied from SO
+
+(defn gen-sets [s]
+  (->> s
+       power-set
+       (map (fn [x] [x (set/difference s x)]))
+       (filter (fn [[x y]] (pos? (compare (vec x) (vec y)))))))
+
+(time (let [raw-nodes (->> "input16b"
+                           slurp
+                           s/split-lines
+                           (map read-node))
+            starting "AA"
+            useless    (->> raw-nodes
+                            (remove (fn [[name {:keys [val]}]]
+                                      (or (< 0 val) (= name starting))))
+                            (map first))
+            nodes   (apply dissoc (complete (into {} raw-nodes)) useless)
+            avialable (disj (into #{} (keys nodes)) starting)]
+        {:part1 (best-path-heur starting nodes  avialable  30 0)
+         :part2 (->> avialable
+                     gen-sets
+                     (pmap  (fn [[x y]]
+                              (+ (best-path-heur starting nodes x  26 0)
+                                 (best-path-heur starting nodes y  26 0))))
+                     (apply max))}))
+
+;; a 1651
+;; b 2029
+;; c 1716
+;; d 2330

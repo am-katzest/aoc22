@@ -25,7 +25,6 @@
                             :else [[c cell] cell])]
               :when (some? v)]
           v)))
-
 (defn advance [coll]
   (let [dirs {\v [0 1] \< [-1 0] \> [1 0] \^ [0 -1]}
         roll-1 (fn [max x] (cond (= 0 x) (dec max)
@@ -75,17 +74,6 @@
 (defonce advance' (memoize advance))
 (defonce grab-walls' (memoize grab-walls))
 
-(defn print-terr [coll]
-  (println)
-  (println)
-  (let [ys (sort (map first coll))
-        xs (sort (map second coll))]
-    (doseq [x (range (first xs)
-                     (inc (last xs)))]
-      (println)
-      (doseq [y (range (first ys) (inc (last ys)))]
-        (print (if (coll [y x])  "{}" "  "))))))
-
 (let [init (->> "input24b"
                 slurp
                 s/split-lines
@@ -105,3 +93,14 @@
              :part2 (->> fst
                          (pathfind e s)
                          (pathfind s e))}))))
+
+(defn print-terr [coll]
+  (println)
+  (println)
+  (let [ys (sort (map first coll))
+        xs (sort (map second coll))]
+    (doseq [x (range (first xs)
+                     (inc (last xs)))]
+      (println)
+      (doseq [y (range (first ys) (inc (last ys)))]
+        (print (if (coll [y x])  "{}" "  "))))))

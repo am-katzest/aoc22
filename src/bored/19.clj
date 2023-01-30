@@ -26,7 +26,7 @@
 (defn  avialable-paths [gain botprints maxes]
   (let [produced? #(or (nil? %) (pos? (% gain)))
         need-more? #(< (% gain) (% maxes))]
-    (for [[res req] [[:o] [:c] [:b :c]]
+    (for [[res req] [[:b :c] [:o] [:c]]
           :when (produced? req)
           :when (need-more? res)] res)))
 
@@ -36,38 +36,34 @@
       (recur (update resources k - v) costs))
     resources))
 
-(defn semi-naive-turn [blueprints  resources bots turn chosen maxes]
-  (b/cond (= turn 27) (:g resources)
-          :let [after-g (has-enough? resources (:g blueprints))]
-          ;; can built geode
-          (some? after-g) (recur blueprints
-                                 (merge-with + after-g bots)
-                                 (update bots :g inc)
-                                 (inc turn) chosen maxes)
-          :let [after-c (has-enough? resources (chosen blueprints))]
-          ;; cannot build anything
-          (nil? after-c) (recur blueprints (merge-with + resources bots) bots (inc turn) chosen maxes)
-          :let [resources' (merge-with + after-g bots)
-                bots' (update bots chosen inc)]
-          (apply max 0
-                 (for [choice (avialable-paths bots' blueprints maxes)]
-                   (semi-naive-turn blueprints resources' bots' (inc turn) choice maxes)))))
-
-(defn semi-naive-launch [blueprints]
-  (let [blueprints (:bots blueprints)
+(defn semi-naive [blueprints]
+  (let [id (:id blueprints)
+        blueprints (:bots blueprints)
         resources {:o 0 :g 0 :c 0 :b 0}
         bots {:o 1 :g 0 :c 0 :b 0}
-        maxes (calc-maxes blueprints)]
-    (max (semi-naive-turn blueprints resources bots 0 :o maxes)
-         (semi-naive-turn blueprints resources bots 0 :c maxes))))
+        maxes (calc-maxes blueprints)
+        mine #(merge-with + %1 %2)
+        add-bot #(update %1 %2 inc)
+        turn (fn semi-naive-turn [resources bots turn chosen]
+               (b/cond (= turn 24) (+ (:g bots) (:g resources))
+                       :let [after-g (has-enough? resources (:g blueprints))]
+                       ;; can built geode
+                       (some? after-g) (recur (mine after-g bots) (add-bot bots :g) (inc turn) chosen)
+                       :let [after-c (has-enough? resources (chosen blueprints))]
+                       ;; cannot build anything
+                       (nil? after-c) (recur (mine resources bots) bots (inc turn) chosen)
+                       :let [resources' (mine after-c bots)
+                             bots' (add-bot bots chosen)]
+                       (apply max 0
+                              (for [choice (avialable-paths bots' blueprints maxes)]
+                                (semi-naive-turn  resources' bots' (inc turn) choice)))))]
+    [id (max (turn resources bots 0 :o)
+             (turn resources bots 0 :c))]))
 
 (->> "input19a"
      slurp
      (s/split-lines)
-     (map (comp make-blueprint read-ints))
-     first
-     semi-naive-launch
-     time)
+     (map (comp semi-naive make-blueprint read-ints)))
 
 ;; (make-initial-guess (:bots b1))
 

@@ -44,8 +44,8 @@
         maxes (calc-maxes blueprints)
         turn (fn semi-naive-turn [resources bots turn chosen]
                (b/cond (= turn 24) (+ (:g bots) (:g resources))
-                       :let [mine #(merge-with + bots %2)
-                             add-bot #(update bots %2 inc)
+                       :let [mine #(merge-with + bots %)
+                             add-bot #(update bots % inc)
                              after-g (has-enough? resources (:g blueprints))]
                        ;; can built geode
                        (some? after-g) (recur (mine after-g) (add-bot :g) (inc turn) chosen)
@@ -57,13 +57,15 @@
                        (apply max 0
                               (for [choice (avialable-paths bots' blueprints maxes)]
                                 (semi-naive-turn  resources' bots' (inc turn) choice)))))]
-    [id (max (turn resources bots 0 :o)
-             (turn resources bots 0 :c))]))
+    (* id (max (turn resources bots 1 :o)
+               (turn resources bots 1 :c)))))
 
-(->> "input19a"
+(->> "input19c"
      slurp
      (s/split-lines)
-     (map (comp semi-naive make-blueprint read-ints)))
+     (pmap (comp semi-naive make-blueprint read-ints))
+     (reduce +)
+     time)
 
 ;; (make-initial-guess (:bots b1))
 

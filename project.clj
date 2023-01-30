@@ -5,5 +5,6 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.11.0"]
                  [incanter "1.9.3"]
-                 [org.clojure/core.logic "1.0.1"]]
+                 [org.clojure/core.logic "1.0.1"]
+                 [better-cond "2.1.5"]]
   :repl-options {:init-ns bored.clj})

@@ -60,21 +60,21 @@
        (map (fn [x] [x (set/difference s x)]))
        (filter (fn [[x y]] (pos? (compare (vec x) (vec y)))))))
 
-(let [raw-nodes (->> "input16a"
-                     slurp
-                     s/split-lines
-                     (map read-node))
-      starting "AA"
-      useless    (->> raw-nodes
-                      (remove (fn [[name {:keys [val]}]]
-                                (or (< 0 val) (= name starting))))
-                      (map first))
-      nodes   (apply dissoc (complete (into {} raw-nodes)) useless)
-      avialable (disj (into #{} (keys nodes)) starting)]
-  {:part1 (best-path-heur starting nodes  avialable  30 0)
-   :part2 (->> avialable
-               gen-sets
-               (pmap  (fn [[x y]]
-                        (+ (best-path-heur starting nodes x  26 0)
-                           (best-path-heur starting nodes y  26 0))))
-               (apply max))})
+(time (let [raw-nodes (->> "input16b"
+                           slurp
+                           s/split-lines
+                           (map read-node))
+            starting "AA"
+            useless    (->> raw-nodes
+                            (remove (fn [[name {:keys [val]}]]
+                                      (or (< 0 val) (= name starting))))
+                            (map first))
+            nodes   (apply dissoc (complete (into {} raw-nodes)) useless)
+            avialable (disj (into #{} (keys nodes)) starting)]
+        {:part1 (best-path-heur starting nodes  avialable  30 0)
+         :part2 (->> avialable
+                     gen-sets
+                     (map  (fn [[x y]]
+                             (+ (best-path-heur starting nodes x  26 0)
+                                (best-path-heur starting nodes y  26 0))))
+                     (apply max))}))

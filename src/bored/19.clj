@@ -1,5 +1,6 @@
 (ns bored.19
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as s]
+            [better-cond.core :as b]))
 
 (defn read-ints [line]
   (->> (s/split line #"[^0-9-]+")
@@ -15,57 +16,59 @@
           :g {:o geode-ore
               :b geode-obsidian}}})
 
-(defn has-enough? [resources cost]
-  (if-let [[k v] (first cost)]
+(defn calc-maxes
+  "calculates maximum production we want of each resource type"
+  [{:keys [c b g]}]
+  {:o (max (:o c) (:o b) (:o g))
+   :c (:c b)
+   :b (:b g)})
+
+(defn  avialable-paths [gain botprints maxes]
+  (let [produced? #(or (nil? %) (pos? (% gain)))
+        need-more? #(< (% gain) (% maxes))]
+    (for [[res req] [[:o] [:c] [:b :c]]
+          :when (produced? req)
+          :when (need-more? res)] res)))
+
+(defn has-enough? "to make some machine" [resources [cost & costs]]
+  (if-let [[k v] cost]
     (when (>= (k resources) v)
-      (recur (update resources k - v) (rest cost)))
+      (recur (update resources k - v) costs))
     resources))
 
-(defn very-naive [blueprints]
-  (let [botprints (:bots blueprints)]
-    (loop [todo (into clojure.lang.PersistentQueue/EMPTY [[{:o 0 :g 0 :c 0 :b 0}
-                                                           {:o 1 :g 0 :c 0 :b 0} 0]])]
-      (if (empty? todo)
-        (let [current (peek todo)
-              [resources bots m] current
-              children (if (= m 24) ()
-                           (let [resources' (merge-with + resources bots)
-                                 minute' (inc m)]
-                             (cons [resources' bots minute']
-                                   (for [[bot cost] blueprints
-                                         :let [resources'' (has-enough? resources' cost)]
-                                         :when (some? resources'')
-                                         :let [bots' (update bots bot inc)]]
-                                     [resources'' bots' minute']))))]
-          (recur (->> children (into (pop todo)))))))))
-(defn naive [blueprints orders]
-  (let [blueprints (:bots blueprints)]
-    (loop [resources {:o 0 :g 0 :c 0 :b 0}
-           bots {:o 1 :g 0 :c 0 :b 0}
-           m 0
-           [bot & rest :as orders] orders]
-      (if (>= m 24) [resources orders]
-          (let [m' (inc m)]
-            (if-let [resources' (and bot (has-enough? resources (blueprints bot)))]
-              (recur (merge-with + resources' bots) (update bots bot inc) m' rest)
-              (recur (merge-with + resources bots) bots m' orders)))))))
+(defn semi-naive-turn [blueprints  resources bots turn chosen maxes]
+  (b/cond (= turn 27) (:g resources)
+          :let [after-g (has-enough? resources (:g blueprints))]
+          ;; can built geode
+          (some? after-g) (recur blueprints
+                                 (merge-with + after-g bots)
+                                 (update bots :g inc)
+                                 (inc turn) chosen maxes)
+          :let [after-c (has-enough? resources (chosen blueprints))]
+          ;; cannot build anything
+          (nil? after-c) (recur blueprints (merge-with + resources bots) bots (inc turn) chosen maxes)
+          :let [resources' (merge-with + after-g bots)
+                bots' (update bots chosen inc)]
+          (apply max 0
+                 (for [choice (avialable-paths bots' blueprints maxes)]
+                   (semi-naive-turn blueprints resources' bots' (inc turn) choice maxes)))))
 
-(def b1 (->> "input19a"
-             slurp
-             (s/split-lines)
-             (map (comp make-blueprint read-ints))
-             first))
-(defn make-initial-guess [{:keys [c b g o]}]
-  (let [obs-ratio (/ (:o b) (:c b))
-        max-ore (max (:o c) (:o b) (:o g))
-        target-clay (int (/ (:c b) 3))
-        target-ore (int (/ max-ore 2))]
-    [obs-ratio max-ore target-clay]
-    (concat (repeat target-ore :o)
-            (repeat target-clay :c)
-            (repeat 2 :b)
-            (repeat 2 :g))))
+(defn semi-naive-launch [blueprints]
+  (let [blueprints (:bots blueprints)
+        resources {:o 0 :g 0 :c 0 :b 0}
+        bots {:o 1 :g 0 :c 0 :b 0}
+        maxes (calc-maxes blueprints)]
+    (max (semi-naive-turn blueprints resources bots 0 :o maxes)
+         (semi-naive-turn blueprints resources bots 0 :c maxes))))
 
-(make-initial-guess (:bots b1))
+(->> "input19a"
+     slurp
+     (s/split-lines)
+     (map (comp make-blueprint read-ints))
+     first
+     semi-naive-launch
+     time)
 
-(naive b1 [:c :c :c :b :c :b :g :g])
+;; (make-initial-guess (:bots b1))
+
+;; (naive b1 [:c :c :c :b :c :b :g :g])

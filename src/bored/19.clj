@@ -21,12 +21,13 @@
   [{:keys [c b g]}]
   {:o (max (:o c) (:o b) (:o g))
    :c (:c b)
-   :b (:b g)})
+   :b (:b g)
+   :g 999})
 
 (defn  avialable-paths [gain botprints maxes]
   (let [produced? #(or (nil? %) (pos? (% gain)))
         need-more? #(< (% gain) (% maxes))]
-    (for [[res req] [[:b :c] [:o] [:c]]
+    (for [[res req] [[:g :b] [:b :c] [:o] [:c]]
           :when (produced? req)
           :when (need-more? res)] res)))
 
@@ -36,19 +37,16 @@
       (recur (update resources k - v) costs))
     resources))
 
-(defn semi-naive [blueprints]
+(defn semi-naive [time blueprints]
   (let [id (:id blueprints)
         blueprints (:bots blueprints)
         resources {:o 0 :g 0 :c 0 :b 0}
         bots {:o 1 :g 0 :c 0 :b 0}
         maxes (calc-maxes blueprints)
         turn (fn semi-naive-turn [resources bots turn chosen]
-               (b/cond (= turn 24) (+ (:g bots) (:g resources))
+               (b/cond (= turn  time) (+ (:g bots) (:g resources))
                        :let [mine #(merge-with + bots %)
-                             add-bot #(update bots % inc)
-                             after-g (has-enough? resources (:g blueprints))]
-                       ;; can built geode
-                       (some? after-g) (recur (mine after-g) (add-bot :g) (inc turn) chosen)
+                             add-bot #(update bots % inc)]
                        :let [after-c (has-enough? resources (chosen blueprints))]
                        ;; cannot build anything
                        (nil? after-c) (recur (mine resources) bots (inc turn) chosen)
@@ -56,17 +54,22 @@
                              bots' (add-bot chosen)]
                        (apply max 0
                               (for [choice (avialable-paths bots' blueprints maxes)]
-                                (semi-naive-turn  resources' bots' (inc turn) choice)))))]
-    (* id (max (turn resources bots 1 :o)
-               (turn resources bots 1 :c)))))
+                                (semi-naive-turn  resources' bots' (inc turn) choice)))))
+        result    (max (turn resources bots 1 :o)
+                       (turn resources bots 1 :c))]
+    [id result]))
 
-(->> "input19c"
-     slurp
-     (s/split-lines)
-     (pmap (comp semi-naive make-blueprint read-ints))
-     (reduce +)
-     time)
-
-;; (make-initial-guess (:bots b1))
-
-;; (naive b1 [:c :c :c :b :c :b :g :g])
+(let [data (-> "input19b" slurp s/split-lines)]
+  {:part1 (->> data
+               (pmap #(->> % read-ints
+                           make-blueprint
+                           (semi-naive 24)
+                           (apply *)))
+               (reduce +))
+   :part2 (->> data
+               (take 3)
+               (pmap #(->> % read-ints
+                           make-blueprint
+                           (semi-naive 32)
+                           second))
+               (apply *))})

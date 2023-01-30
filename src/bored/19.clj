@@ -42,18 +42,18 @@
         resources {:o 0 :g 0 :c 0 :b 0}
         bots {:o 1 :g 0 :c 0 :b 0}
         maxes (calc-maxes blueprints)
-        mine #(merge-with + %1 %2)
-        add-bot #(update %1 %2 inc)
         turn (fn semi-naive-turn [resources bots turn chosen]
                (b/cond (= turn 24) (+ (:g bots) (:g resources))
-                       :let [after-g (has-enough? resources (:g blueprints))]
+                       :let [mine #(merge-with + bots %2)
+                             add-bot #(update bots %2 inc)
+                             after-g (has-enough? resources (:g blueprints))]
                        ;; can built geode
-                       (some? after-g) (recur (mine after-g bots) (add-bot bots :g) (inc turn) chosen)
+                       (some? after-g) (recur (mine after-g) (add-bot :g) (inc turn) chosen)
                        :let [after-c (has-enough? resources (chosen blueprints))]
                        ;; cannot build anything
-                       (nil? after-c) (recur (mine resources bots) bots (inc turn) chosen)
-                       :let [resources' (mine after-c bots)
-                             bots' (add-bot bots chosen)]
+                       (nil? after-c) (recur (mine resources) bots (inc turn) chosen)
+                       :let [resources' (mine after-c)
+                             bots' (add-bot chosen)]
                        (apply max 0
                               (for [choice (avialable-paths bots' blueprints maxes)]
                                 (semi-naive-turn  resources' bots' (inc turn) choice)))))]

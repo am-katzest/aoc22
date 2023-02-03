@@ -1,7 +1,24 @@
 (ns bored.shapes
-  (:require [scad-clj.model :refer :all]
-            [scad-clj.scad :refer :all]
-            [clojure.string :as s]))
+  (:use scad-clj.model)
+  (:use scad-clj.scad))
+(defn rotatecr [[x y z] & block]
+  `(:rotatecr [~x ~y ~z] ~@block))
+(defn rotate2 [& block]
+  (if (number? (first block))
+    (rotatev (first block) (second block) (rest (rest block)))
+    (rotatecr (first block) (rest block))))
+
+(def rad->deg2
+  (fn [radians]
+    (if (number? radians)
+      (rad->deg radians)
+      (str "(" radians "*" (/ 180 pi) ")"))))
+
+(defmethod write-expr :rotatecr [depth [form [x y z] & block]]
+  (concat
+   (list (indent depth) "rotate ([" (rad->deg2 x) "," (rad->deg2 y) "," (rad->deg2 z) "]) {\n")
+   (write-block depth block)
+   (list (indent depth) "}\n")))
 
 (defn cubulate [x]
   (union x
@@ -19,13 +36,20 @@
            (translate [(* offset (Math/sin i))
                        (* offset (Math/cos i))
                        0] x))))
+(defn cub [x] (cube x x x))
 
 (def cubz
-  (->> (cylinder 8 100)
-       (spread 16 4)
-       (rotate [0 0 666])
-       cubulate
-       (intersection (sphere 20))
-       (difference (sphere 18))))
+  (->> (difference
+        (->>
+         (cylinder 5 100)
+         (spread 12 4)
+         (rotate2 [0 0 (str "$t*" pi)])
+         (cubulate))
+        (->>
+         (cylinder 4 1001)
+         (spread 10 4)
+         (rotate2 [0 0 (str "$t*" pi)])
+         (cubulate)))
+       (difference (sphere 12))))
 
-(spit "shapes.scad" (write-scad [[:fn 256] cubz]))
+(spit "shapes.scad" (write-scad [[:fn 128] cubz]))

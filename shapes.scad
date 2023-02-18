@@ -1,6 +1,6 @@
 $fn = 128;
 difference () {
-  sphere (r=12);
+  sphere (r=10);
   difference () {
     union () {
       rotate ([0.0,0.0,($t*3.141592653589793*57.29577951308232)]) {

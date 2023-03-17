@@ -3,8 +3,8 @@
             [clojure.string :as  s]))
 
 (defn read-that-thing [x]
-  (println x)
   (->> x
+       (format "data/reut2-0%02d.sgm")
        slurp
        (#(s/replace % #"&#\d+;" ""))
        (#(s/replace-first % #"^[^\n]+\n" ""))
@@ -15,12 +15,11 @@
        :content))
 
 (->> (range 0 22)
-     (map #(format "data/reut2-0%02d.sgm" %))
-     (map read-that-thing)
-     (apply concat)
+     (pmap read-that-thing)
+     (reduce concat)
      shuffle
-     (#(xml/emit {:tag :DATASET
-                  :attrs {:UWUŚNY true}
-                  :content (vec %)}))
-     with-out-str
-     (spit "fixed"))
+     (partition-all 1000)
+     (pmap  #(with-out-str (mapv xml/emit-element %)))
+     (s/join "\n")
+     (spit "fixed")
+     time)

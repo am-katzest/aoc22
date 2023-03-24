@@ -21,6 +21,7 @@
   (condp  = t
     :DATE (first x)
     :TITLE (first x)
+    :AUTHOR (first x)
     :BODY (first x)
     :DATELINE (first x)
     :TEXT (unroll x)
@@ -50,9 +51,3 @@
      json/write-str
      (spit "json")
      time)
-(->> (range 0 1)
-     (pmap read-that-thing)
-     (reduce concat)
-     (pmap parse)
-     first
-     keys)

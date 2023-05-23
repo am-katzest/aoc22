@@ -2,9 +2,9 @@
   (:require
    [clojure.string :as s]))
 
-(defn V
+(def V
   "applies operator to each element of vectors"
-  [op & vecs] (apply mapv op vecs))
+  mapv)
 
 (defn spring
   "calculates movement based on difference"

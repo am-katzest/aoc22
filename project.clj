@@ -6,6 +6,7 @@
   :dependencies [[org.clojure/clojure "1.11.0"]
                  [incanter "1.9.3"]
                  [org.clojure/core.logic "1.0.1"]
+                 [org.clojure/data.csv "1.0.1"]
                  [better-cond "2.1.5"]
                  [scad-clj "0.5.3"]]
   :repl-options {:init-ns bored.clj})

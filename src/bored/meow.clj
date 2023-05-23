@@ -20,8 +20,9 @@
                          "p+u*rr+"
                          "m[nmwreaouwi]+[włu]" ; this one should get most
                          (str "r+" (at-least-one "[nmwreaouwi]" "[rea]") "[iawłu]+")
-                         "m*r+((p|a+)?|r)" ; mrrrp mraa
-                         ])
+                         "m+rr+"
+                         "m+r+p+"
+                         "m+r+i*a+"])
                 ")"))
 (def nyas "(n[- ])?n+[mnyi]+a+")
 

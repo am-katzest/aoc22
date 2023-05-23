@@ -1,114 +1,80 @@
 $fn = 128;
-difference () {
-  sphere (r=10);
-  difference () {
-    union () {
-      rotate ([0.0,0.0,($t*3.141592653589793*57.29577951308232)]) {
-        union () {
-          translate ([0.0, 12.0, 0]) {
-            cylinder (h=100, r=5, center=true);
-          }
-          translate ([12.0, 7.347880794884119E-16, 0]) {
-            cylinder (h=100, r=5, center=true);
-          }
-          translate ([1.4695761589768238E-15, -12.0, 0]) {
-            cylinder (h=100, r=5, center=true);
-          }
-          translate ([-12.0, -2.204364238465236E-15, 0]) {
-            cylinder (h=100, r=5, center=true);
-          }
-        }
-      }
-      mirror ([1, 0, 1]) {
-        rotate ([0.0,0.0,($t*3.141592653589793*57.29577951308232)]) {
-          union () {
-            translate ([0.0, 12.0, 0]) {
-              cylinder (h=100, r=5, center=true);
-            }
-            translate ([12.0, 7.347880794884119E-16, 0]) {
-              cylinder (h=100, r=5, center=true);
-            }
-            translate ([1.4695761589768238E-15, -12.0, 0]) {
-              cylinder (h=100, r=5, center=true);
-            }
-            translate ([-12.0, -2.204364238465236E-15, 0]) {
-              cylinder (h=100, r=5, center=true);
-            }
-          }
-        }
-      }
-      mirror ([0, 1, 1]) {
-        rotate ([0.0,0.0,($t*3.141592653589793*57.29577951308232)]) {
-          union () {
-            translate ([0.0, 12.0, 0]) {
-              cylinder (h=100, r=5, center=true);
-            }
-            translate ([12.0, 7.347880794884119E-16, 0]) {
-              cylinder (h=100, r=5, center=true);
-            }
-            translate ([1.4695761589768238E-15, -12.0, 0]) {
-              cylinder (h=100, r=5, center=true);
-            }
-            translate ([-12.0, -2.204364238465236E-15, 0]) {
-              cylinder (h=100, r=5, center=true);
-            }
-          }
-        }
-      }
+scale ([0.1, 0.1, 0.05]) {
+  union () {
+    translate ([0, 0, 0]) {
+      surface (file = "cat0x0.png", center=true);
     }
-    union () {
-      rotate ([0.0,0.0,($t*3.141592653589793*57.29577951308232)]) {
-        union () {
-          translate ([0.0, 10.0, 0]) {
-            cylinder (h=1001, r=4, center=true);
-          }
-          translate ([10.0, 6.123233995736766E-16, 0]) {
-            cylinder (h=1001, r=4, center=true);
-          }
-          translate ([1.2246467991473533E-15, -10.0, 0]) {
-            cylinder (h=1001, r=4, center=true);
-          }
-          translate ([-10.0, -1.8369701987210296E-15, 0]) {
-            cylinder (h=1001, r=4, center=true);
-          }
-        }
-      }
-      mirror ([1, 0, 1]) {
-        rotate ([0.0,0.0,($t*3.141592653589793*57.29577951308232)]) {
-          union () {
-            translate ([0.0, 10.0, 0]) {
-              cylinder (h=1001, r=4, center=true);
-            }
-            translate ([10.0, 6.123233995736766E-16, 0]) {
-              cylinder (h=1001, r=4, center=true);
-            }
-            translate ([1.2246467991473533E-15, -10.0, 0]) {
-              cylinder (h=1001, r=4, center=true);
-            }
-            translate ([-10.0, -1.8369701987210296E-15, 0]) {
-              cylinder (h=1001, r=4, center=true);
-            }
-          }
-        }
-      }
-      mirror ([0, 1, 1]) {
-        rotate ([0.0,0.0,($t*3.141592653589793*57.29577951308232)]) {
-          union () {
-            translate ([0.0, 10.0, 0]) {
-              cylinder (h=1001, r=4, center=true);
-            }
-            translate ([10.0, 6.123233995736766E-16, 0]) {
-              cylinder (h=1001, r=4, center=true);
-            }
-            translate ([1.2246467991473533E-15, -10.0, 0]) {
-              cylinder (h=1001, r=4, center=true);
-            }
-            translate ([-10.0, -1.8369701987210296E-15, 0]) {
-              cylinder (h=1001, r=4, center=true);
-            }
-          }
-        }
-      }
+    translate ([0, -179, 0]) {
+      surface (file = "cat0x1.png", center=true);
+    }
+    translate ([0, -358, 0]) {
+      surface (file = "cat0x2.png", center=true);
+    }
+    translate ([0, -537, 0]) {
+      surface (file = "cat0x3.png", center=true);
+    }
+    translate ([0, -716, 0]) {
+      surface (file = "cat0x4.png", center=true);
+    }
+    translate ([175, 0, 0]) {
+      surface (file = "cat1x0.png", center=true);
+    }
+    translate ([175, -179, 0]) {
+      surface (file = "cat1x1.png", center=true);
+    }
+    translate ([175, -358, 0]) {
+      surface (file = "cat1x2.png", center=true);
+    }
+    translate ([175, -537, 0]) {
+      surface (file = "cat1x3.png", center=true);
+    }
+    translate ([175, -716, 0]) {
+      surface (file = "cat1x4.png", center=true);
+    }
+    translate ([350, 0, 0]) {
+      surface (file = "cat2x0.png", center=true);
+    }
+    translate ([350, -179, 0]) {
+      surface (file = "cat2x1.png", center=true);
+    }
+    translate ([350, -358, 0]) {
+      surface (file = "cat2x2.png", center=true);
+    }
+    translate ([350, -537, 0]) {
+      surface (file = "cat2x3.png", center=true);
+    }
+    translate ([350, -716, 0]) {
+      surface (file = "cat2x4.png", center=true);
+    }
+    translate ([525, 0, 0]) {
+      surface (file = "cat3x0.png", center=true);
+    }
+    translate ([525, -179, 0]) {
+      surface (file = "cat3x1.png", center=true);
+    }
+    translate ([525, -358, 0]) {
+      surface (file = "cat3x2.png", center=true);
+    }
+    translate ([525, -537, 0]) {
+      surface (file = "cat3x3.png", center=true);
+    }
+    translate ([525, -716, 0]) {
+      surface (file = "cat3x4.png", center=true);
+    }
+    translate ([700, 0, 0]) {
+      surface (file = "cat4x0.png", center=true);
+    }
+    translate ([700, -179, 0]) {
+      surface (file = "cat4x1.png", center=true);
+    }
+    translate ([700, -358, 0]) {
+      surface (file = "cat4x2.png", center=true);
+    }
+    translate ([700, -537, 0]) {
+      surface (file = "cat4x3.png", center=true);
+    }
+    translate ([700, -716, 0]) {
+      surface (file = "cat4x4.png", center=true);
     }
   }
 }
